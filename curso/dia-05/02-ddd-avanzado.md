@@ -92,7 +92,7 @@ Estos eventos son inmutables, autocontenidos y nombrados siempre en pasado, refl
 ```mermaid
 graph LR
   A[Aggregate] -->|Emite| B((Evento))
-  B --> C[Event Store]
+  B --> C[Event Bus / Broker]
   C --> D[Proyecciones]
   C --> E[Integración Externa]
 ```
@@ -114,7 +114,7 @@ export interface DomainEvent<T extends string = string> {
 }
 
 /**
- * Abstract base class for aggregates with event sourcing capabilities
+ * Abstract base class for aggregates that record domain events
  */
 export abstract class AggregateRoot {
   private changes: DomainEvent[] = [];  // Internal event buffer

@@ -16,6 +16,13 @@ Es habitual mezclar “arquitectura por capas” y “puertos/adaptadores”, as
 - **Arquitectura por capas** (presentación → lógica → datos) organiza responsabilidades, pero puede terminar con dependencias “hacia abajo” que contaminan el dominio (si el dominio depende de ORM/HTTP).
 - **Hexagonal** mantiene el dominio/aplicación en el centro y obliga a que la infraestructura dependa del core mediante puertos (DIP).
 
+### 0.1 Capas: presentación, lógica empresarial y acceso de datos
+
+- **Capa de presentación**: controladores/handlers (HTTP, CLI, consumidores) y mapeo de DTOs.
+- **Capa de lógica empresarial**: casos de uso + dominio (reglas y decisiones).
+- **Capa de acceso de datos**: persistencia e integraciones (DB, brokers, APIs externas).
+- **Comunicación entre capas**: la presentación delega en la lógica; la lógica depende de abstracciones; los detalles (datos/infra) implementan esas abstracciones.
+
 En la práctica:
 
 - La **capa de presentación** suele ser un adaptador de entrada (HTTP/CLI/consumer).
@@ -30,6 +37,42 @@ En la práctica:
 | Puerto de Salida     | Driven / Secondary   | Capa de aplicación            | UserRepositoryPort, PaymentGatewayPort       |
 | Adaptador de Entrada | Controller / Handler | Infraestructura (HTTP, CLI)   | FastifyHandler, GraphQLResolver, CLIParser   |
 | Adaptador de Salida  | Gateway              | Infraestructura (DB, MQ, API) | PostgresUserRepository, StripePaymentGateway |
+
+### 1.1 Puertos de entrada y salida en la arquitectura hexagonal
+
+- **Puerto de entrada**: define cómo “se invoca” un caso de uso (desde HTTP, CLI o consumo de eventos).
+- **Puerto de salida**: define cómo el caso de uso interactúa con dependencias externas (repositorio, bus de eventos, terceros).
+
+### 1.2 ¿Cómo se relacionan los puertos con los Domain Object y los casos de uso?
+
+- Los **Domain Objects** viven en dominio (entidades/VO/agregados) y representan reglas e invariantes.
+- Los **casos de uso** viven en aplicación y orquestan Domain Objects.
+- Los **puertos** son el pegamento: el caso de uso se define como puerto de entrada y consume puertos de salida para persistir/publicar/integrar.
+
+### 1.3 Creando un puerto de entrada y salida en un proyecto Node bajo un modelo de arquitectura hexagonal
+
+Ejemplo mínimo (entrada + salida):
+
+```ts
+// application/ports/ReserveStockPort.ts (puerto de entrada)
+export type ReserveStockCommand = { sku: string; qty: number; orderId: string };
+export interface ReserveStockPort {
+  execute(command: ReserveStockCommand): Promise<void>;
+}
+
+// application/ports/InventoryRepositoryPort.ts (puerto de salida)
+import type { ProductInventory } from "../../domain/model/ProductInventory";
+export interface InventoryRepositoryPort {
+  findBySku(sku: string): Promise<ProductInventory | null>;
+  save(inventory: ProductInventory): Promise<void>;
+}
+```
+
+### 1.4 Tipos de adaptadores en la arquitectura hexagonal
+
+- **Adaptadores de entrada**: reciben “intenciones” (HTTP, CLI, consumers) y traducen a comandos/queries del core.
+- **Adaptadores de salida**: implementan puertos para infraestructura (DB, broker, APIs externas, cache).
+- **Adaptadores de traducción**: *mappers/ACL* entre modelos cuando integras bounded contexts (evita acoplamiento).
 
 ## 2. Diagrama conceptual (Mermaid)
 
@@ -209,7 +252,7 @@ describe("InventoryRepositoryPostgres", () => {
 
 ---
 
-## 8. Segregación de responsabilidades: comandos vs consultas (CQRS)
+## 8. Segregación de responsabilidad entre comandos y consultas (CQRS)
 
 Una fuente común de acoplamiento es “un endpoint que hace de todo”: valida, cambia estado, consulta y compone respuestas complejas. Esto se suele formalizar como **segregación de comandos y consultas**.
 

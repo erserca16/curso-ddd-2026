@@ -3,6 +3,8 @@
 
 **Tema global:** Fundamentos de DDD y transición del Modelo Anémico al Modelo Rico
 
+**Temario (referencia):** [9 · Domain Driven Design (DDD)](../../NUEVO_TEMARIO.md#9-domain-driven-design-ddd) · [14 · Conocimiento y gestión de la complejidad del dominio](../../NUEVO_TEMARIO.md#14-conocimiento-y-gestión-de-la-complejidad-del-dominio)
+
 ---
 
 ## Objetivos del día

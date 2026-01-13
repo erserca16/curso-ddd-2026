@@ -2,6 +2,8 @@
 **Duración:** 16:00 – 19:00
 **Tema global:** *Límites de dominio (bounded contexts), ownership y cómo se reflejan en el diseño del servicio*
 
+**Temario (referencia):** [1 · Introducción a la arquitectura de microservicios](../../NUEVO_TEMARIO.md#1-introducción-a-la-arquitectura-de-microservicios) · [3 · Comunicación y descubrimiento de servicios](../../NUEVO_TEMARIO.md#3-comunicación-y-descubrimiento-de-servicios) · [14 · Conocimiento y gestión de la complejidad del dominio](../../NUEVO_TEMARIO.md#14-conocimiento-y-gestión-de-la-complejidad-del-dominio)
+
 ## Objetivos del día
 
 | # | Objetivo concreto                                                  | ¿Por qué importa?                                                            |

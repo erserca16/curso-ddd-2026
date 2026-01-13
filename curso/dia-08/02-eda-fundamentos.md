@@ -108,7 +108,28 @@ end
 
 ## **Parte II: Patrones y buenas prácticas de microservicios (más allá del broker)**
 
-### 6. API Gateway y API Composition
+### 4. Patrón de diseño de agregados
+
+En DDD, un **agregado** es la unidad mínima de consistencia transaccional: dentro de sus límites se protegen invariantes; fuera de ellos, se integra por identificadores y eventos.
+
+- Un microservicio suele contener **uno o varios agregados**, pero un agregado **no debería cruzar** límites de servicio.
+- Los **Domain Events** normalmente se emiten desde el *Aggregate Root* (o inmediatamente después) para comunicar cambios relevantes.
+- Regla práctica: si una regla requiere consistencia fuerte entre dos “cosas”, revisa si están en el mismo agregado o si necesitas un proceso asíncrono (saga).
+
+### 5. Patrón de diseño de eventos y mensajes
+
+EDA se apoya en dos conceptos:
+
+- **Eventos**: hechos del dominio en pasado (“OrderPaid”), pensados para múltiples consumidores.
+- **Mensajes**: envoltorios de transporte (headers, IDs, reintentos, DLQ) que garantizan entrega y trazabilidad.
+
+Buenas prácticas mínimas:
+
+- Nombra eventos con lenguaje ubicuo y en pasado.
+- Incluye `eventId`, `occurredAt`, `correlationId` y `version` en el contrato.
+- Diseña para “al menos una vez”: idempotencia y consumidores tolerantes a duplicados.
+
+### 6. Patrón de diseño de gateway y API composition
 
 En microservicios es habitual que un cliente necesite datos de múltiples servicios. Dos enfoques:
 
@@ -125,7 +146,15 @@ En su lugar:
 - El Gateway/BFF compone por **lecturas** (queries) y mantiene las **escrituras** como comandos claros.
 - Para composición compleja, usa read models/proyecciones (CQRS) o vistas materializadas.
 
-### 7. Seguridad en microservicios orientados a eventos
+### 6.1 Patrón de diseño de publicación-suscripción
+
+En **publicación-suscripción (pub/sub)**, el productor publica en un canal (topic/exchange) sin conocer a los consumidores; cada consumidor se suscribe a lo que le interesa.
+
+- Reduce acoplamiento temporal (no necesitas que “el otro” esté disponible).
+- Permite escalar consumidores independientemente (paralelismo por cola/partición).
+- Exige idempotencia, orden (si aplica) y políticas claras de reintento/DLQ.
+
+### 7. Recomendaciones de seguridad en microservicios
 
 EDA no elimina la seguridad; la desplaza a más puntos:
 
@@ -135,7 +164,7 @@ EDA no elimina la seguridad; la desplaza a más puntos:
 - **Protección de datos**: evita PII en eventos; cifra payloads sensibles; rota secretos.
 - **Trazabilidad**: propaga `correlationId`/`traceId` para auditoría y respuesta a incidentes.
 
-### 8. Buenas prácticas de gestión (operación y evolución)
+### 8. Buenas prácticas en la implementación y gestión de microservicios
 
 - **Idempotencia** por diseño (consumidores tolerantes a duplicados).
 - **Versionado** y compatibilidad: tolerant reader + upcasters (ya visto en ejemplos).
@@ -345,21 +374,15 @@ La EDA no es solo publicar y suscribir. Existen patrones de diseño probados que
 |                                                     |                                                                                                                                                |                                                                                 |                                                                            |                                                            |                                                     |                                                          |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------- |
 | **Patrón**                                          | **Descripción Breve**                                                                                                                          | **Caso de Uso Principal**                                                       | **Ejemplo Real**                                                           | **Tech Típica**                                            | **Ventaja Clave**                                   | **Desafío Común**                                        |
-| **Event Sourcing**                                  | Persistir todos los cambios al estado de una aplicación como una secuencia de eventos.                                                         | Auditoría completa, reconstrucción de estado, debugging.                        | Sistema bancario (historial de transacciones), Git (historial de commits). | EventStoreDB, Axon Framework, Kafka (como log)             | Trazabilidad total, capacidad de análisis temporal. | Complejidad en consultas de estado actual.               |
 | **CQRS (Command Query Responsibility Segregation)** | Separar los modelos y almacenamientos para operaciones de escritura (Commands) y lectura (Queries).                                            | Sistemas con alta carga de lectura y/o escritura, modelos de datos complejos.   | Dashboards analíticos vs. procesamiento de transacciones en e-commerce.    | Kafka + Elasticsearch, RDBMS (escritura) + NoSQL (lectura) | Optimización independiente de lecturas/escrituras.  | Consistencia eventual, duplicación de datos.             |
 | **Saga Pattern**                                    | Gestionar transacciones distribuidas que abarcan múltiples servicios mediante una secuencia de transacciones locales y eventos compensatorios. | Reservas de viajes (vuelo+hotel+coche), proceso de checkout en e-commerce.      | Orquestación de microservicios para un pedido complejo.                    | Temporal.io, AWS Step Functions, NServiceBus, Axon Saga    | Mantiene consistencia en sistemas distribuidos.     | Complejidad en diseño y manejo de fallos/compensaciones. |
-| **Event-Carried State Transfer**                    | Los eventos llevan todos los datos necesarios para que el consumidor actúe, evitando llamadas de vuelta al productor.                          | Replicación de datos entre servicios, reducción de latencia para el consumidor. | Servicio de catálogo de productos actualiza caché de servicio de búsqueda. | Kafka, RabbitMQ (con eventos "ricos")                      | Autonomía del consumidor, menor carga al productor. | Eventos más grandes, posible acoplamiento de datos.      |
 | **Outbox Pattern**                                  | Garantizar que un evento se publique si, y solo si, la transacción de negocio principal se completa con éxito.                                 | Evitar inconsistencias entre la BD del servicio y el broker de eventos.         | Publicar PedidoCreado solo si el pedido se guarda en la BD.                | Debezium + Kafka, Transacciones locales (BD+tabla outbox)  | Entrega de eventos más fiable.                      | Requiere un proceso que lea del outbox y publique.       |
 
 **Profundización (Párrafos por patrón):**
 
-**Event Sourcing:** "Imagina que en lugar de guardar el saldo actual de una cuenta, guardas cada depósito y retiro. Ese es el espíritu de Event Sourcing. El estado actual se deriva reproduciendo los eventos. Esto es oro para auditorías y para entender _cómo_ llegamos a un estado. El reto es que obtener el estado actual puede requerir procesar muchos eventos, aunque se usan 'snapshots' para optimizar."
-
 **CQRS:** "Piensa en un periódico: una redacción optimizada para escribir noticias (Commands) y una imprenta optimizada para distribuirlas masivamente (Queries). CQRS aplica esto a los datos. Puedes tener una base de datos relacional súper normalizada para las escrituras y una base de datos NoSQL desnormalizada y optimizada para búsquedas rápidas para las lecturas. La 'magia' está en cómo sincronizas ambas, a menudo usando eventos."
 
 **Saga:** "¿Cómo reservas un paquete de vuelo + hotel si son servicios distintos y uno puede fallar? La Saga lo maneja. Si el vuelo se reserva (evento: VueloReservado), se intenta reservar el hotel. Si el hotel falla (evento: FalloReservaHotel), se dispara una acción compensatoria (evento: CancelarVueloReservado). Hay dos tipos: _Coreografía_ (servicios se escuchan y reaccionan) y _Orquestación_ (un coordinador central dirige el flujo)."
-
-**Event-Carried State Transfer:** "Cuando un servicio publica un evento ProductoActualizado, ¿debe el consumidor llamar de vuelta al servicio de productos para obtener los detalles? Con este patrón, el evento ya lleva nombre, precio, descripción. Esto hace al consumidor más autónomo y rápido, pero cuidado con enviar 'demasiada' información o información que cambia muy frecuentemente, podría acoplar los servicios."
 
 **Outbox Pattern:** "Es crucial: ¿Qué pasa si guardas el pedido en tu base de datos, pero justo antes de publicar el evento PedidoCreado en Kafka, tu servicio se cae? El pedido existe pero nadie se entera. El Outbox Pattern resuelve esto: guardas el pedido Y el evento en la misma transacción de base de datos (en una tabla 'outbox'). Otro proceso (como Debezium) lee esta tabla y publica los eventos de forma fiable al broker."
 

@@ -2,7 +2,16 @@
 
 > Este documento conecta DDD con límites de microservicios y modelos coherentes por contexto.
 
-## Introducción a los pilares estratégicos de DDD
+## 0. ¿Qué es DDD?
+
+DDD (*Domain‑Driven Design*) es un enfoque de diseño en el que el **dominio (negocio)** guía la forma del software: modelamos reglas e invariantes con el **lenguaje del negocio**, y hacemos que el código sea una representación fiel y evolutiva de ese conocimiento.
+
+DDD se trabaja en dos planos complementarios:
+
+- **Patrones estratégicos**: dividir el problema en subdominios y **contextos delimitados**, y definir sus relaciones.
+- **Patrones tácticos**: expresar el modelo dentro de cada contexto con entidades, value objects, agregados, eventos, repositorios y casos de uso.
+
+## 1. Patrones estratégicos
 
 Antes de abordar los modelos de dominio, es crucial entender los cimientos que hacen posible el diseño guiado por el dominio:
 
@@ -22,16 +31,18 @@ flowchart TD
 
 ---
 
-## 1. Lenguaje Ubicuo: La columna vertebral de DDD
+## 2. Lenguaje ubicuo (Lenguaje común): la columna vertebral de DDD
 
-¿Qué es? Un vocabulario compartido entre expertos de negocio y desarrolladores
+¿Qué es el lenguaje ubicuo? Un vocabulario compartido entre expertos de negocio y desarrolladores, alineado al **lenguaje empresarial** y reflejado en código, tests y documentación.
 
 Patrones clave:
 - Glosario de términos técnicos-negocio (ej: Pedido = Order agregado con Items)
 - Diagramas que reflejan lenguaje de negocio (no solo UML técnico)
 - Documentación viva en el código (tipos, métodos y tests con nombres de dominio)
 
-## 2. Bounded Contexts: Mapeando la complejidad organizacional
+## 3. ¿Qué es un contexto delimitado? (Bounded Context)
+
+Un **contexto delimitado** es un límite donde un modelo tiene significado estable. Dentro del contexto, un término (“Pedido”) significa una cosa; fuera, puede significar otra.
 
 | Tipo | Características | Ejemplo en e-commerce |
 |------|----------------|----------------------|
@@ -39,7 +50,15 @@ Patrones clave:
 | Soporte | Necesario pero no diferenciador | Gestión de inventario |
 | Genérico | Problemas comunes ya resueltos | Pasarela de pagos |
 
-## 3. Subdominios: Fronteras de significado
+### 3.1 Dominios principales (Core Domain)
+
+El **Core Domain** es la parte del negocio donde la organización compite de verdad (ventaja diferencial). Heurísticas para identificarlo:
+
+- Donde hay reglas que cambian con frecuencia por estrategia de negocio.
+- Donde “comprar una solución” no resuelve (necesitas modelado propio).
+- Donde conviene concentrar a los perfiles más fuertes (y proteger el contexto con contratos claros).
+
+## 4. Subdominios
 
 Principio: "Un término no puede significar dos cosas en el mismo contexto"
 
@@ -48,7 +67,66 @@ Implementación técnica:
 - Módulos/librerías con responsabilidades acotadas
 - Eventos de dominio con semántica contextual
 
-## 4. Transición estratégica -> Táctico
+### 4.1 Límites
+
+Un buen límite reduce fricción:
+
+- **Invariantes**: qué reglas requieren consistencia fuerte.
+- **Lenguaje**: dónde cambia el significado de los términos.
+- **Ritmo de cambio**: qué evoluciona junto y qué no.
+
+### 4.2 Límites físicos
+
+Son límites de ejecución/despliegue: procesos, contenedores, redes, DBs. En microservicios, suelen alinearse con bounded contexts, pero se negocian por coste operativo.
+
+### 4.3 Límites de propiedad
+
+El límite de propiedad define **quién es responsable** (equipo/área) de un contexto. Es clave para reducir coordinación y clarificar “quién decide” sobre contratos y evolución.
+
+## 5. Conocimiento y gestión de la complejidad del dominio
+
+DDD es, ante todo, un proceso para convertir **problemas de negocio** en un **modelo del dominio empresarial** que sea útil para construir software.
+
+### 5.1 Problemas de negocio
+
+Un problema de negocio se formula como una necesidad/restricción (“no puedo prometer stock si no hay disponibilidad”) y no como una solución técnica (“pon Redis”).
+
+### 5.2 Descubrimiento del conocimiento
+
+Técnicas comunes: entrevistas con expertos, *Example Mapping*, *Event Storming* y revisión de incidentes/soporte para encontrar reglas reales (las que no estaban en los tickets).
+
+### 5.3 Comunicación
+
+La comunicación continua (negocio ↔ ingeniería) evita que el software modele “suposiciones”. En DDD, el lenguaje ubicuo es el artefacto compartido que reduce malentendidos.
+
+### 5.4 Lenguaje empresarial
+
+Es el vocabulario que el negocio usa: términos, estados, políticas y excepciones. Mantenerlo explícito (glosario + ejemplos) es más efectivo que documentar solo endpoints.
+
+### 5.5 Modelo del dominio empresarial
+
+El modelo del dominio empresarial es una representación conceptual de reglas, estados y procesos: entidades relevantes, invariantes, eventos y decisiones.
+
+### 5.6 ¿Qué es un modelo?
+
+Un modelo es una simplificación útil de la realidad: captura lo importante para tomar decisiones y construir software, ignorando el resto.
+
+### 5.7 Modelado efectivo
+
+- Modela con **ejemplos** (casos normales y bordes) y convierte ejemplos en tests.
+- Mantén agregados pequeños y APIs expresivas (métodos con intención, no setters).
+- Separa modelos cuando el lenguaje cambia: un “Pedido” no es igual en logística y en pagos.
+
+### 5.8 Modelos inconsistentes en la arquitectura hexagonal
+
+En hexagonal es habitual tener varios modelos (dominio, DTOs HTTP, eventos de integración). La inconsistencia aparece cuando:
+
+- el dominio se contamina con DTOs/ORMs, o
+- distintos adapters “redefinen” conceptos (duplicidad semántica).
+
+Antídotos: **traducción en adaptadores**, puertos explícitos, y *anti‑corruption layers* entre contextos.
+
+## 6. Patrones tácticos (de estratégico a implementación)
 Estos pilares estratégicos nos llevan naturalmente a implementaciones tácticas:
 
 ```mermaid
@@ -69,7 +147,7 @@ Flujo de diseño recomendado:
 
 ---
 
-## 5. El problema del "Anemic Domain Model"
+## 7. El problema del "Anemic Domain Model"
 
 Objetivo: Comprender por qué el modelo anémico dificulta la evolución del software y cómo un dominio rico encapsula reglas, invariantes y comportamientos dentro de las entidades.
 
@@ -99,11 +177,11 @@ Referencia: Martin Fowler, “Anemic Domain Model” – https://martinfowler.co
 
 ---
 
-## 6. Refactor a un Domain Model Rico
+## 8. Refactor a un Domain Model Rico
 
 Un **modelo rico** coloca la lógica de negocio dentro de las propias entidades y agregados. Así cada objeto sabe cómo validarse y comportarse.
 
-### 6.1 Value Object: Quantity
+### 8.1 Value Object: Quantity
 
 ```ts
 // src/domain/value-objects/Quantity.ts  
@@ -126,7 +204,7 @@ export class Quantity {
 }
 ```
 
-### 6.2 Entity y Aggregate Root: Order
+### 8.2 Entity y Aggregate Root: Order
 
 ```ts
 // src/domain/entities/OrderItem.ts  
@@ -184,7 +262,7 @@ export class Order {
 }
 ```
 
-### 6.3 Diagrama de flujo de comportamiento
+### 8.3 Diagrama de flujo de comportamiento
 
 ```mermaid
 flowchart TB
@@ -209,7 +287,7 @@ flowchart TB
 
 ---
 
-## 7. Puerto de Persistencia
+## 9. Puerto de Persistencia
 
 Para mantener el dominio independiente de la base de datos, definimos un puerto en `order-service`:
 
@@ -227,7 +305,7 @@ Así la infraestructura (Postgres, Mongo, Redis) implementará este contrato sin
 
 ---
 
-## 8. Comparativa rápida
+## 10. Comparativa rápida
 
 Métrica                 | Modelo anémico                 | Modelo rico  
 ------------------------|--------------------------------|---------------------------------  
@@ -238,7 +316,7 @@ Legibilidad del código  | Bajo                            | Alto, código autoe
 
 ---
 
-## 9. Migración gradual y segura
+## 11. Migración gradual y segura
 
 1. **Paralelismo**: crea las nuevas clases (`Order`, `OrderItem`, `Quantity`) sin eliminar aún el código anémico.  
 2. **Cobertura de tests**: añade tests unitarios para cada método crítico (`addItem`, `pay`, `total`).  
@@ -247,6 +325,14 @@ Legibilidad del código  | Bajo                            | Alto, código autoe
 5. **Descontaminación**: elimina el modelo anémico (`orderModel.ts`, `saveOrder`) cuando la cobertura de tests supere el 80%.
 
 ---
+
+## 12. Aplicando los distintos patrones a proyectos de Node
+
+- Alinea microservicios con **bounded contexts** (no con tablas o capas técnicas).
+- Usa **arquitectura hexagonal** para separar dominio/aplicación/infra y facilitar tests.
+- Expresa el lenguaje ubicuo con TypeScript: value objects, enums/union types y métodos con intención.
+- Protege contratos: OpenAPI/AsyncAPI + versionado + contract tests para APIs y eventos.
+- Diseña operación desde el inicio: *timeouts*, idempotencia, DLQ y observabilidad (logs/métricas/trazas).
 
 **Referencias**  
 - Fowler, Martin. “Anemic Domain Model” – https://martinfowler.com/bliki/AnemicDomainModel.html  

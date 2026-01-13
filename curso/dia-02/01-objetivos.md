@@ -1,6 +1,9 @@
 # Sesión 2 · Jueves 29-ene-2026  
 **Duración:** 16:00 – 19:00
 **Tema global:** *Arquitectura Hexagonal + DDD táctico: Domain Objects, Use Cases, Puertos y Adaptadores*
+
+**Temario (referencia):** [10 · Arquitectura hexagonal y la aplicación de DDD](../../NUEVO_TEMARIO.md#10-arquitectura-hexagonal-y-la-aplicación-de-ddd) · [11 · Domain Objects y casos de uso](../../NUEVO_TEMARIO.md#11-domain-objects-y-casos-de-uso) · [12 · Patrones de arquitectura en DDD](../../NUEVO_TEMARIO.md#12-patrones-de-arquitectura-en-ddd)
+
 ## Objetivos del día
 
 | # | Objetivo concreto                                                 | ¿Por qué importa?                                                      |

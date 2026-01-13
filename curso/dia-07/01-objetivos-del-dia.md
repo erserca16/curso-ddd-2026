@@ -1,10 +1,13 @@
 # Sesión 7 · Martes 17-feb-2026  
 **Duración:** 16:00 – 19:00
 **Tema global:** *CQRS avanzado + patrones de comunicación (Outbox, Saga, Process Manager) y resiliencia*
+
+**Temario (referencia):** [4 · Escalabilidad y rendimiento en microservicios](../../NUEVO_TEMARIO.md#4-escalabilidad-y-rendimiento-en-microservicios) · [5 · Tolerancia a fallos y resiliencia](../../NUEVO_TEMARIO.md#5-tolerancia-a-fallos-y-resiliencia-en-microservicios) · [13 · Patrones de comunicación en DDD](../../NUEVO_TEMARIO.md#13-patrones-de-comunicación-en-ddd)
+
 ## Objetivos y roadmap de la sesión
 
 - Sincronizar sprint: PR de ayer revisados  
-- **Event Sourcing avanzado**: Comprender append-only y versionado  
+- Traducción de modelos (sin estado / con estado)  
 - **Patrón Outbox + Exactly-Once**: Diseño sin fantasías  
 - **Saga/Process Manager** intro: Choreography vs Orchestration  
 - Lab: Saga de checkout (reserva → creación) + compensaciones  
@@ -25,7 +28,7 @@
 | Hora | Bloque | Contenido |
 |------|--------|-----------|
 | 16:00–16:10 | Repaso y sincronización | Revisión de PRs y acuerdos de diseño. |
-| 16:10–16:40 | Event Sourcing avanzado | Append-only, replay y versionado de eventos. |
+| 16:10–16:40 | Traducción de modelos | Stateless vs stateful translation, ACL y correlación. |
 | 16:40–17:10 | Outbox Pattern | Persistencia fiable, deduplicación e idempotencia. |
 | 17:10–17:20 | Descanso | Pausa breve. |
 | 17:20–17:50 | Sagas / Process Managers | Orquestación vs coreografía y compensaciones. |

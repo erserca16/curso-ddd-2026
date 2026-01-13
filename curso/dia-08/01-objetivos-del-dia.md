@@ -2,6 +2,8 @@
 **Duración:** 16:00 – 19:00
 **Tema global:** *Patrones y buenas prácticas en microservicios: eventos, mensajería y pub/sub (EDA)*
 
+**Temario (referencia):** [6 · Patrones y buenas prácticas en microservicios](../../NUEVO_TEMARIO.md#6-patrones-y-buenas-prácticas-en-microservicios) · [3 · Comunicación y descubrimiento de servicios](../../NUEVO_TEMARIO.md#3-comunicación-y-descubrimiento-de-servicios)
+
 ## Objetivos y agenda
 
 | Actividad                                 | Salida esperada                      |

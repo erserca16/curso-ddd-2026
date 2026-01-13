@@ -40,7 +40,7 @@ flowchart TB
 **Caso Real**:  
 - *Ejemplo Twitter*: En 2012, su API de escritura (tweets) y lectura (timelines) colisionaban, requiriendo partición gradual.
 
-### 1.2 CQRS como Separación de Intereses  
+### 1.2 Uso de patrón CQRS  
 **Metáfora**:  
 - *Cocina de restaurante*:  
   - **Command Side**: Chef (escribe) organiza estaciones para eficiencia en preparación.  
@@ -94,9 +94,9 @@ flowchart LR
       }
     }
     ```
-- **Event Store**:  
-  - Base de eventos inmutables (ej: EventStoreDB, DynamoDB Streams).  
-  - Patrón "Append-Only": Los eventos son fuentes de verdad.  
+- **Persistencia del Write Model**:  
+  - Base de datos transaccional donde se guardan cambios del lado de comandos (PostgreSQL, MySQL, etc.).  
+  - Desde aquí se derivan proyecciones/read models para optimizar lecturas (CQRS).  
 
 ### 2.2 Flujo End-to-End con Casos de Error 
 **Secuencia con Fallos**:  
@@ -104,28 +104,28 @@ flowchart LR
 sequenceDiagram
     participant UI as Frontend
     participant CH as Command Handler
-    participant ES as Event Store
+    participant WDB as Write DB
     participant P as Projector
     participant RM as Read Model
     
     UI->>CH: ReserveStock
-    CH->>ES: Append StockReserved
-    ES-->>CH: OK
+    CH->>WDB: Persist StockReserved (cambio)
+    WDB-->>CH: OK
     CH-->>UI: 200 OK
     
-    Note over ES,P: ¡Proyector falla!
-    ES->>P: StockReserved (reintentar x3)
+    Note over WDB,P: ¡Proyector falla!
+    WDB->>P: Cambio detectado (reintentar x3)
     P->>RM: Update
     RM-->>P: Error de conexión
-    P-->>ES: NACK
+    P-->>WDB: NACK
     
-    Note over ES: Dead Letter Queue
-    ES->>Monitor: Alerta
+    Note over P: Dead Letter Queue
+    P->>Monitor: Alerta
 ```
 - **Mecanismos de Resiliencia**:  
   - Reintentos exponenciales en proyectores.  
   - Dead Letter Queues + Monitorización.  
-  - Reconstrucción de Read Models desde Event Store.
+  - Reconstrucción de Read Models desde la fuente de cambios (write DB).
 
 ---
 
@@ -199,7 +199,7 @@ class StockProjector {
 
 **Configuración en AWS**:  
 - **Command Side**:  
-  - Lambda + DynamoDB (Event Store) + Reserved Concurrency.  
+  - Lambda + DynamoDB (write DB) + Reserved Concurrency.  
 - **Query Side**:  
   - API Gateway + ElasticCache (Redis) con TTL de 10 segundos.  
   - ElasticSearch para búsquedas complejas.  
@@ -209,7 +209,6 @@ class StockProjector {
 - Lecturas: 5 ms/op (consistencia eventual).  
 
 ### 3.3 Discusión de Patrones Relacionados  
-- **Event Sourcing**: No es obligatorio, pero común en CQRS.  
 - **Sagas**: Coordinación entre agregados vía eventos.  
 - **Caching Strategies**:  
   - **Write-Through**: Actualiza cache en comandos.  
@@ -225,7 +224,7 @@ class StockProjector {
     title Ciclo de Vida CQRS
     section Comando
       Command Handler: 5: Ejecuta
-      Event Store: 3: Persiste
+      Write DB: 3: Persiste
     section Consulta
       Read Model: 5: Responde
       Projector: 3: Actualiza
@@ -245,12 +244,12 @@ graph TD
 **Evaluación Rápida y ejercicios**:  
 - 3 Preguntas Rápidas (Kahoot!):  
   1. ¿Qué componente maneja la lógica de negocio en CQRS?  
-  2. ¿True or False?: CQRS requiere siempre Event Sourcing.  
+  2. ¿True or False?: CQRS implica modelos distintos para lecturas y escrituras.  
   3. Nombra tres ventajas de separar modelos de lectura/escritura.  
 
 ---
 
-## 5. Otras estrategias de escalado y rendimiento
+## 5. Introducción a las técnicas de escalado más habituales
 
 CQRS es una herramienta potente, pero no es la única. En microservicios solemos combinar:
 
@@ -261,30 +260,49 @@ CQRS es una herramienta potente, pero no es la única. En microservicios solemos
 - **Errores**: aumento de `5xx`, *timeouts* y *retries*.
 - **Backlogs**: colas creciendo (broker), *consumer lag*.
 
-### 5.2 Escalado horizontal vs vertical
+### 5.2 Estrategias de escalabilidad horizontal y vertical
 
 - **Horizontal**: más réplicas del servicio + balanceo → el camino habitual.
 - **Vertical**: más CPU/RAM → útil para estabilizar, pero tiene techo y coste.
 
-### 5.3 Replicación y separación de lectura
+### 5.3 Uso de Base de Datos de Replicación
 
 - Read replicas + *routing* de consultas.
 - Read models especializados (proyecciones) para endpoints calientes.
 
-### 5.4 Caché
+### 5.4 Implementación de caché en microservicios
 
 - Caché por endpoint/route (TTL) para lecturas repetidas.
 - Caché de dominio (con invalidación) para agregados con alta lectura.
 - Ojo: caché sin *observabilidad* = bugs invisibles.
 
-### 5.5 Lambdas/Jobs para cargas no continuas
+### 5.5 Uso de Lambdas para demandas de uso no continuas
 
 - Para picos (campañas), mover procesamiento pesado a workers o funciones.
 - Mantén idempotencia y trazabilidad (reintentos).
 
-### 5.6 Balanceo y control de tráfico
+### 5.6 Uso de balanceadores de carga en microservicios
 
 - Load balancers + *rate limiting*.
 - *Bulkheads* y colas internas para absorber picos sin colapsar el core.
+
+### 5.7 Técnicas de optimización de rendimiento en microservicios
+
+- Optimiza I/O antes que CPU: índices, *query plans*, *pooling* y reducción de *chatty calls*.
+- Reduce payloads: paginación, campos selectivos, compresión y formatos eficientes cuando aplica (p. ej. Protobuf).
+- Evita “N+1 calls” entre servicios: composición en gateway/BFF o proyecciones (CQRS).
+- Perf en Node: profiling (clinic/0x), `event loop lag`, uso de streams y evitar CPU‑bound en el loop (workers).
+
+### 5.8 Monitoreo y ajuste de recursos en entornos de microservicios
+
+- Métricas de saturación (CPU, memoria, conexiones DB, backlog de colas) + latencias P95/P99.
+- Alertas por SLO (no solo “CPU alta”): *error rate*, *burn rate*, colas creciendo y *timeouts*.
+- Ajuste de límites: requests/limits (k8s), *autoscaling* por CPU/RPS o por *queue depth* (KEDA), *connection pools*.
+
+### 5.9 Aplicando técnicas de escalado en proyectos Node
+
+- Escala horizontal: múltiples réplicas + balanceador; evita estado en memoria (o externalízalo).
+- CPU‑bound: `worker_threads` o jobs; no bloquees el event loop (PDF, cifrado, compresión).
+- Concurrencia controlada: límites de `pool`, *bulkheads*, *rate limiting* y backpressure.
 
 ---

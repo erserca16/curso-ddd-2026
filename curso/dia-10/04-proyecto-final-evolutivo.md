@@ -1,8 +1,8 @@
 # Proyecto final evolutivo
 
-Intentar dejar el inventory-service totalmente operativo, observable y emitiendo eventos de negocio.
+Objetivo: dejar el `inventory-service` totalmente operativo, observable y emitiendo eventos de negocio.
 
-## Tareas
+## Desarrollando la solución
 
 1. Crear el esquema Postgres
    - Copia el prisma/schema.prisma de abajo y ejecuta npx prisma migrate dev --name init_inventory
@@ -19,7 +19,7 @@ Fin de la sesión: el servicio puede reservar/liberar/reponer stock, expone mét
 
 ⸻
 
-## Caso de negocio – Inventory Service (bounded-context único)
+## Estableciendo los requisitos del proyecto
 
 ### 1.1 Problema que resuelve
 
@@ -66,7 +66,7 @@ sequenceDiagram
 
 ⸻
 
-## Qué harán los otros servicios
+## Estableciendo la arquitectura
 
 ### 2.1 Contexto de sistema
 
@@ -121,12 +121,40 @@ Propagación de eventos	P99 < 30 ms	clúster RabbitMQ
 
 ⸻
 
-## Checklist de calidad y buenas prácticas
+## Orientando a microservicios
 
-•	Aplica las reglas hexagonales: puertos delgados, adaptadores finos, DI con scopes (Prisma singleton, repos por scope) ￼
-•	Testea el dominio en memoria (ejemplo ya escrito) ￼
-•	Nunca loguees/traces desde entidades – instrumenta a nivel de adaptador (evita el anti-patrón “Domain HUD”) ￼
-•	Utiliza el patrón Outbox cuando introduzcas la base de datos de pagos más adelante.
+- Define límites por **bounded context** (inventario ≠ pedidos) y propiedad de datos por servicio.
+- Comunica integración por **contratos**: APIs para comandos/consultas puntuales y eventos para hechos del dominio.
+- Diseña para fallos: timeouts, reintentos idempotentes, DLQ y observabilidad.
+
+## Orientando a Arquitectura Hexagonal
+
+- Objetivo del bloque: **Orientando a Arquitactura Hexagonal** (arquitectura hexagonal aplicada al proyecto).
+- Dominio aislado (entidades/VO/agregados) + aplicación (casos de uso) + infraestructura (adaptadores).
+- Puertos explícitos para repositorios y publicación/consumo de eventos.
+- Adaptadores finos: validan/transforman y delegan; instrumentación en bordes (no en entidades).
+
+## Garantizando eficiencia a través de CQRS
+
+- Separa escritura (comandos) de lectura (queries) cuando el volumen lo justifique.
+- Usa proyecciones/read models y caché para hot paths de lectura.
+- Acepta consistencia eventual en lecturas derivadas y asegura idempotencia en proyectores.
+
+## Redacción de pruebas
+
+- **Unitarias**: dominio en memoria (invariantes y transiciones).
+- **Aplicación**: casos de uso con dobles de puertos (repo/bus).
+- **Integración**: adaptadores (Postgres/RabbitMQ) con Testcontainers cuando aplique.
+- **Contratos**: APIs (OpenAPI) y eventos (AsyncAPI/esquemas) para evitar roturas entre equipos.
+
+⸻
+
+## Consejos y buenas prácticas para siguientes pasos
+
+- Aplica reglas hexagonales: puertos delgados, adaptadores finos, DI con scopes (Prisma singleton, repos por scope).
+- Testea el dominio en memoria y separa tests de integración para adaptadores.
+- Nunca loguees/traces desde entidades: instrumenta a nivel de adaptador (evita el anti‑patrón “Domain HUD”).
+- Introduce Outbox cuando la publicación de eventos dependa de una transacción de base de datos.
 
 ---
 
@@ -172,6 +200,12 @@ curl -i -X POST http://localhost:3001/inventory/ABC-1234-AB/replenish \
 ```
 
 ---
+
+## Análisis de resultados
+
+- Valida SLAs/SLOs: latencia P95/P99, tasa de error y saturación (CPU/memoria/DB).
+- Revisa salud del broker: profundidad de colas, *consumer lag*, tasa de *acks* y DLQ.
+- Correlaciona métricas ↔ trazas ↔ logs usando `traceId`/`correlationId` para aislar cuellos de botella.
 
 ## Ideas de dashboards (PromQL)
 

@@ -1,6 +1,9 @@
 # Sesión 10 · Jueves 26-feb-2026  
 **Duración:** 16:00 – 19:00
 **Tema global:** *Monitorización, estandarización y cierre del proyecto final*
+
+**Temario (referencia):** [7 · Monitorización y solución de problemas](../../NUEVO_TEMARIO.md#7-monitorización-y-solución-de-problemas-en-microservicios) · [15 · Estandarización, conclusiones y revisión de proyectos](../../NUEVO_TEMARIO.md#15-estandarización-de-desarrollos-conclusiones-y-revisión-de-proyectos-del-curso) · [16 · Proyecto final evolutivo](../../NUEVO_TEMARIO.md#16-proyecto-final-evolutivo)
+
 ## Objetivos y agenda
 
 | Actividad                                | Resultado                        |

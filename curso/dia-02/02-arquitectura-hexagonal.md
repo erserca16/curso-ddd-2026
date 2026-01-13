@@ -5,7 +5,7 @@
 ---
 
 
-## 1. Orígenes y motivación
+## 1. Introducción a la arquitectura hexagonal
 
 La Arquitectura Hexagonal surge en 2005 de la mano de **Alistair Cockburn** como respuesta a un reto constante: las reglas de negocio cambian con menor frecuencia que las tecnologías que las soportan. En entornos tradicionales, un monolito o una aplicación estratificada veían cómo cada actualización de framework, controlador de BD o cliente HTTP obligaba a modificar el núcleo de la aplicación. Cockburn propuso aislar la lógica de negocio en un “hexágono” rodeado de **puertos** (interfaces) y **adaptadores** (implementaciones), de modo que:
 
@@ -53,7 +53,7 @@ flowchart LR
 
 ---
 
-## 2. Principios clave
+## 2. Principios de la arquitectura hexagonal
 
 | Principio                         | Qué significa                                                   | Beneficio práctico                                                     |
 |-----------------------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------|
@@ -64,7 +64,18 @@ flowchart LR
 
 ---
 
-## 3. Comparativa de patrones
+## 3. Módulos de la arquitectura hexagonal
+
+En un microservicio Node, la hexagonal suele aterrizar en cuatro módulos principales:
+
+- **Dominio**: entidades, value objects, agregados y eventos (reglas + invariantes).
+- **Aplicación**: casos de uso que orquestan el dominio y los puertos (sin detalles técnicos).
+- **Puertos**: interfaces de entrada/salida que el core define (contratos).
+- **Adaptadores**: implementaciones concretas (HTTP, DB, broker, APIs externas) + *wiring* (DI).
+
+Regla práctica: si una clase “no compila” sin un framework (Fastify/Prisma), no debería estar en dominio.
+
+## 4. Diferencias entre Arquitecturas: Clean vs Hexagonal vs Onion
 
 | Dimensión       | Hexagonal                    | Onion                          | Clean Architecture             |
 |-----------------|------------------------------|--------------------------------|--------------------------------|
@@ -76,7 +87,7 @@ flowchart LR
 
 ---
 
-## 4. Beneficios en Microservicios Node.js
+## 5. Beneficios en Microservicios Node.js
 
 1. **Evolutividad:** inyectar nuevos adaptadores (REST, gRPC, CLI) sin tocar el core.  
 2. **Testabilidad:** la mayor parte de la lógica se prueba en memoria, sin arranque de contenedores.  
@@ -85,7 +96,7 @@ flowchart LR
 
 ---
 
-## 5. Ejemplo práctico: arrancando un servicio hexagonal
+## 6. Ejemplo práctico: arrancando un servicio hexagonal
 
 A continuación un skeleton de inventory-service que ya respeta ports & adapters:
 
@@ -224,7 +235,7 @@ export async function registerRoutes(app: FastifyInstance) {
 ```
 ---
 
-## 6. Convirtiendo un microservicio a arquitectura hexagonal (guía práctica)
+## 7. Convirtiendo microservicios a arquitectura hexagonal (guía práctica)
 
 Un patrón común en equipos Node es partir de un servicio “framework‑first” (controladores grandes + repositorios mezclados) y evolucionar hacia un core estable. Un camino seguro:
 
@@ -248,7 +259,7 @@ Un patrón común en equipos Node es partir de un servicio “framework‑first�
 
 ---
 
-## 7. Síntomas de mal implementación
+## 8. Síntomas de mal implementación
 
 - Adapters con lógica de negocio: rutas que validan reglas complejas o calculan totales.  
 - Dominio importando librerías externas (axios, fs, etc.).  
@@ -256,3 +267,63 @@ Un patrón común en equipos Node es partir de un servicio “framework‑first�
 
 > Regla de oro:  
 > Si tu dominio necesita arrancar un contenedor para pasar un test, tu hexágono tiene fugas.  
+
+---
+
+## 9. Domain Objects y casos de uso
+
+### 9.1 ¿Qué son los Domain Objects?
+
+Son los objetos que expresan el modelo del dominio: **Entities**, **Value Objects**, **Aggregates** y, en algunos casos, **Domain Services**.
+
+### 9.2 ¿Para que sirven los Domain Objects?
+
+Para encapsular reglas e invariantes, reducir duplicidad de lógica y hacer que el código “hable” el lenguaje del negocio.
+
+### 9.3 Creando nuestro primer Domain Object en un proyecto Node bajo un modelo de arquitectura hexagonal
+
+Ejemplo (inventario): un `ProductInventory` con métodos intencionales (`reserve`, `release`, `replenish`) y un `Quantity` como value object que protege invariantes.
+
+```ts
+export class Quantity {
+  private constructor(readonly value: number) {}
+  static of(value: number) {
+    if (!Number.isInteger(value) || value <= 0) throw new Error("Quantity inválida");
+    return new Quantity(value);
+  }
+}
+
+export class ProductInventory {
+  constructor(readonly sku: string, private available: number) {}
+  reserve(qty: Quantity) {
+    if (this.available < qty.value) throw new Error("Stock insuficiente");
+    this.available -= qty.value;
+  }
+  getAvailable() {
+    return this.available;
+  }
+}
+```
+
+### 9.4 ¿Qué son los casos de uso en la arquitectura hexagonal?
+
+Son coordinadores de la capa de aplicación: implementan una intención (“Reservar stock”) y orquestan dominio + puertos (repos, bus de eventos, etc.).
+
+### 9.5 ¿Para que sirven los casos de uso?
+
+Para mantener los adaptadores finos (HTTP/consumers) y centralizar políticas de aplicación: transacciones locales, idempotencia, publicación de eventos y reglas de autorización.
+
+### 9.6 Creación de proyecto Node bajo un modelo de arquitectura hexagonal
+
+Estructura mínima recomendada:
+
+```text
+src/
+  domain/
+  application/
+  infrastructure/
+  main.ts
+tests/
+```
+
+La idea es que el dominio y aplicación se puedan testear sin infraestructura real, y que la infraestructura sea intercambiable por adaptadores.

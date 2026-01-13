@@ -2,15 +2,28 @@
 
 > Este material se usa en el cierre del curso como parte del bloque de estandarización, conclusiones y revisión de proyectos.
 
-## Estandarización de desarrollos
+## Módulo 15 — Estandarización de desarrollos, conclusiones y revisión de proyectos
 
-- **Qué es estandarizar**: acordar convenciones y prácticas para que múltiples equipos puedan colaborar sin fricción.
-- **Estrategias**:
-  - guías de arquitectura (hex/DDD), convenciones de endpoints/eventos, versionado y compatibilidad.
-  - Definition of Done: tests, observabilidad mínima, ADRs y *runbooks*.
-- **Herramientas**: ADRs, C4, linters/formatters, pipelines CI/CD, repos de plantillas (*service templates*).
-- **Métricas**: latencia, error rate, throughput, lead time, change failure rate, MTTR.
-- **Revisión de proyectos**: evaluar coherencia de límites, contratos, operación y seguridad.
+### 15.1 Introducción al concepto de estandarización de desarrollos
+
+Estandarizar significa acordar convenciones y prácticas para que múltiples equipos puedan colaborar sin fricción y mantener un nivel mínimo de calidad.
+
+### 15.2 Estrategias principales para estandarizar desarrollos entre equipos
+
+- Guías de arquitectura (hex/DDD), convenciones de endpoints/eventos, versionado y compatibilidad.
+- Definition of Done: tests, observabilidad mínima, ADRs y *runbooks*.
+
+### 15.3 Principales herramientas
+
+- ADRs, C4, linters/formatters, pipelines CI/CD, repos de plantillas (*service templates*).
+
+### 15.4 Uso de métricas
+
+- Latencia, *error rate*, throughput, lead time, change failure rate, MTTR.
+
+### 15.5 Revisando proyectos del curso y su estandarización
+
+Checklist de revisión: coherencia de límites, contratos, operación, seguridad, tests y telemetría mínima.
 
 ## Repaso rápido: aprendizajes clave
 
@@ -34,8 +47,8 @@ En las sesiones anteriores, hemos sentado una base sólida para la arquitectura 
      - Consideraciones sobre **consistencia eventual**.
    - **Arquitectura Orientada a Eventos (EDA):**
      - Comunicación asincrónica mediante **brokers de eventos** (RabbitMQ/Kafka).
-     - Patrones como **Event Sourcing**, **Outbox Pattern** y **Sagas**.
-     - Estrategias de **versionado de eventos** y **recuperación de errores**.
+     - Patrones como **Outbox Pattern** y **Sagas**.
+     - Estrategias de **recuperación de errores**.
 
 3. **Node.js y Microservicios:**
    - Ventajas del modelo **asincrónico/no bloqueante** de Node.js.
@@ -132,49 +145,3 @@ Necesitamos un broker de eventos para comunicación asíncrona entre servicios.
 - Deberemos implementar el *Outbox Pattern* para garantizar entrega.
 - Planificar escalado horizontal con clusters si el volumen crece.
 ```
-
----
-
-## Próximos Pasos
-
-### **1. Madurez en Event-Driven Architecture**
-- **Implementar Schema Registry:** Para gestión centralizada de esquemas de eventos (Ej: Apache Avro).
-- **Ejemplo de Evento:**
-  ```json
-  {
-    "eventType": "OrderCreated/v1",
-    "data": {
-      "orderId": "ABC-123",
-      "items": [{"productId": "X1", "quantity": 2}],
-      "correlationId": "CID-789"
-    },
-    "metadata": {
-      "source": "OrderService",
-      "timestamp": "2024-02-15T10:00:00Z"
-    }
-  }
-  ```
-
-### 2. Observabilidad Profunda
-- **Métricas Clave por Servicio:**
-  | Servicio          | Métricas                                                      |
-  |-------------------|---------------------------------------------------------------|
-  | OrderService      | Tiempo medio de procesamiento, errores de pago, órdenes fallidas |
-  | InventoryService  | Stock bajo, tiempos de reserva, eventos de desabastecimiento    |
-  | NotificationService | Latencia de notificaciones, tasa de fallos SMS/Email          |
-
-### 3. Evolución de Bounded Contexts
-- **Mapa de Contextos:**
-```mermaid
-graph LR
-  A[Pedidos] -->|Publica OrderCreated| B[Inventario]
-  A -->|Usa| C[Pagos]
-  B -->|Publica StockUpdated| D[Analíticas]
-  D -->|Consume| E[Almacenamiento en BigQuery]
-```
-
-### Canary Release
-Un canary release es una estrategia de despliegue progresivo que consiste en liberar una nueva versión del software a un subconjunto reducido de usuarios o infraestructura antes de desplegarla al 100%. Esto permite detectar errores, degradaciones de rendimiento o efectos no deseados en producción con un impacto limitado. La clave está en monitorear activamente métricas y logs durante esta fase y comparar el comportamiento entre versiones. Si todo funciona como se espera, el despliegue continúa de forma escalonada; si se detectan fallos, se revierte rápidamente. Es una técnica crítica en entornos con alta disponibilidad o grandes volúmenes de tráfico, donde un fallo global sería costoso.
-
-### Chaos Testing
-El chaos testing o chaos engineering es una práctica deliberada que busca introducir fallos en un sistema en producción (o entornos muy similares) con el objetivo de validar su resiliencia. En lugar de asumir que todo funcionará bien, se parte de la premisa contraria: los sistemas distribuidos fallan, y es necesario anticipar cómo se comportan bajo presión. Se simulan cortes de red, caídas de servicios, sobrecargas o errores aleatorios, y se mide si el sistema logra recuperarse sin afectar la experiencia del usuario. Esta disciplina, popularizada por Netflix con su Chaos Monkey, es esencial para construir software robusto y tolerante a fallos reales.

@@ -56,7 +56,7 @@ Una arquitectura de microservicios es un estilo en el que un sistema se compone 
 
 No es “hacer endpoints en repos distintos”: es diseñar **límites**, **contratos** y **responsabilidades** para que el sistema evolucione sin colapsar por acoplamiento.
 
-### 2.2 Principios y características
+### 2.2 Principios y características de los microservicios
 
 - **Autonomía y ownership**: un servicio debe tener un propósito claro y un equipo responsable.
 - **Límites alineados al negocio**: servicios definidos por capacidades (no por capas técnicas).
@@ -65,7 +65,7 @@ No es “hacer endpoints en repos distintos”: es diseñar **límites**, **cont
 - **Automatización**: CI/CD, observabilidad y despliegue reproducible no son opcionales.
 - **Diseño para fallos**: la red falla, hay latencia, y los servicios pueden estar caídos.
 
-### 2.3 Ventajas y desafíos
+### 2.3 Ventajas y desafíos de los microservicios
 
 **Ventajas típicas**
 
@@ -80,7 +80,7 @@ No es “hacer endpoints en repos distintos”: es diseñar **límites**, **cont
 - Observabilidad: sin trazas/logs/métricas, depurar es impracticable.
 - Testing: integración y contratos (consumer‑driven) se vuelven críticos.
 
-### 2.4 Comparación con monolito y SOA (resumen operativo)
+### 2.4 Comparación con otras arquitecturas (monolítica, SOA, etc.)
 
 | Enfoque | Cuándo encaja | Riesgo típico |
 |--------|----------------|---------------|
@@ -88,7 +88,7 @@ No es “hacer endpoints en repos distintos”: es diseñar **límites**, **cont
 | **Microservicios** | Múltiples equipos, necesidades de escalado/aislamiento, dominios diferenciables | “Distribuir el monolito” y multiplicar la complejidad |
 | **SOA clásica** | Integración corporativa heterogénea, ESB y gobierno central | Acoplamiento por middleware y despliegues coordinados |
 
-### 2.5 Casos de uso (y anti‑casos)
+### 2.5 Aplicaciones y casos de uso de la arquitectura de microservicios
 
 Encaja cuando:
 
@@ -111,7 +111,17 @@ Para evitar microservicios “por endpoints”, usamos heurísticas de diseño p
 
 Regla práctica: si dos funcionalidades **siempre** cambian juntas y comparten invariantes, probablemente pertenecen al mismo contexto; si cambian con ritmos distintos, conviene separar.
 
-### 2.7 Diseño de interfaces de comunicación
+### 2.6.1 Separación de responsabilidades y funcionalidades en microservicios
+
+Una forma práctica de reforzar límites es separar explícitamente:
+
+- **Reglas de negocio** (dominio): invariantes, decisiones, transiciones válidas.
+- **Orquestación** (aplicación): coordina casos de uso, transacciones locales y publicación de eventos.
+- **Transporte e integración** (infra): HTTP, colas, DB, *serialization*, observabilidad.
+
+Señal de alerta: cuando un servicio acumula endpoints “de todo” (CRUD + composición + reportes + procesos batch), normalmente está mezclando **funcionalidades con ritmos de cambio distintos** y termina degradando su diseño.
+
+### 2.7 Modelado y diseño de interfaces de comunicación
 
 Dos ejes deciden el contrato:
 
@@ -129,7 +139,7 @@ Un criterio común: **comandos** que necesitan respuesta inmediata → síncrono
 
 Evitar: descomposición por “capas” (users‑service, db‑service) o por entidades CRUD (customer‑service) sin invariantes claras.
 
-### 2.9 Estrategias base de escalabilidad y disponibilidad
+### 2.9 Estrategias de escalabilidad y disponibilidad en microservicios
 
 - **Escalado horizontal** (réplicas) vs **vertical** (más recursos): casi siempre primero horizontal.
 - **Caché** (read‑through, write‑through) y **CDN** para contenido estático.
@@ -144,15 +154,15 @@ Estas estrategias condicionan el diseño desde el principio: modelado de endpoin
 
 Migrar no es “partir el monolito”: es **reducir riesgo** mientras extraes capacidades.
 
-- **Evaluación inicial**: identifica módulos con alta fricción (cambian mucho, fallan mucho, escalan mal).
-- **Servicios candidatos**: prioriza contextos con límites claros y bajo acoplamiento (inventario suele ser buen candidato).
-- **Estrategia gradual (Strangler Fig)**:
-  - extrae rutas/funcionalidades por *slice*.
-  - mantén compatibilidad de contratos mientras conviven viejo/nuevo.
-- **Gestión de datos**:
+- **Evaluación de arquitecturas existentes para migración a microservicios**: identifica módulos con alta fricción (cambian mucho, fallan mucho, escalan mal).
+- **Identificación de servicios y funcionalidades candidatos a migrar**: prioriza contextos con límites claros y bajo acoplamiento (inventario suele ser buen candidato).
+- **Estrategias de migración gradual y paralela**:
+  - **Gradual (Strangler Fig)**: extrae rutas/funcionalidades por *slice* y mantén compatibilidad de contratos mientras conviven viejo/nuevo.
+  - **Paralela**: ejecuta el flujo nuevo en paralelo, compara resultados y enruta un porcentaje controlado de tráfico con rollback rápido.
+- **Gestión de datos y bases de datos en entornos de microservicios**:
   - evita “shared database” permanente; úsala como puente temporal si no hay alternativa.
   - introduce eventos de integración para sincronizar estados cuando separe DBs.
-- **Retos**: consistencia, observabilidad, testing de contratos, operación (on‑call), cultura de ownership.
+- **Retos y consideraciones en la migración a microservicios**: consistencia, observabilidad, testing de contratos, operación (on‑call), cultura de ownership.
 
 ---
 
@@ -523,7 +533,6 @@ export class GetOrderHandler {
 
 - Consistencia eventual: tras un comando, puede haber un pequeño retardo hasta que el Read Model refleje el cambio. Hay que diseñar UX y Sagas acordes.
 - Idempotencia y resiliencia: al procesar eventos para actualizar el Read Model, los handlers deben ser idempotentes y capaces de reintentos seguros.
-- Event Sourcing (opcional): si los eventos de dominio se convierten en la única fuente de verdad, el Write Model se reconstruye reaplicando la secuencia de eventos. Esto facilita auditoría y versionado, pero añade complejidad operacional.
 
 #### 2.3.5 ¿Cuándo usarlo?
 

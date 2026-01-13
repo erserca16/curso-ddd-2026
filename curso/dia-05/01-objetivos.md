@@ -2,6 +2,8 @@
 **Duración:** 16:00 – 19:00  
 **Tema global:** Patrones Tácticos Avanzados en DDD
 
+**Temario (referencia):** [9 · Domain Driven Design (DDD)](../../NUEVO_TEMARIO.md#9-domain-driven-design-ddd) · [12 · Patrones de arquitectura en DDD](../../NUEVO_TEMARIO.md#12-patrones-de-arquitectura-en-ddd)
+
 ## Propósito General
 
 Proporcionar a los participantes una comprensión profunda y aplicable de los patrones tácticos que forman la columna vertebral del diseño de software basado en DDD, con una mirada concreta a su implementación en Node.js. Este módulo se enfoca tanto en la teoría como en su transferencia práctica al código.

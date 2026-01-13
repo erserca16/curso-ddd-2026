@@ -4,60 +4,7 @@
 
 ---
 
-## 1. El Event Loop y su impacto en Microservicios
-
-Node.js se basa en **un único hilo de ejecución** (event loop) gestionado por libuv, al que se suman **operaciones I/O** delegadas a una _thread pool_. Comprender este modelo es importante una vez llegamos a problemas de escalabilidad/memoria/performance, etc...:
-
-1. **Arquitectura del Event Loop**
-
-   - libuv orquesta varias **fases** (timers, poll, check, close) que procesan callbacks en cola.
-   - Las operaciones de red o disco se envían a la thread pool y, al completarse, su callback vuelve al loop principal.
-   - Documentación oficial: <https://nodejs.org/dist/latest-v20.x/docs/api/async_context.html> y <https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick>
-
-2. **Single thread ≠ single core**
-
-   - Aunque el loop sea single-threaded, la thread pool (por defecto 4 hilos) maneja tareas CPU-bound como compresión, cifrado o acceso a ficheros.
-   - Permite delegar trabajo pesado y mantener el loop libre para atender conexiones entrantes.
-
-3. **Back-pressure y streams**
-
-   - En conexión HTTP o TCP, si el consumidor procesa más lento que el emisor, la **cola de callbacks** crece y puede saturar memoria.
-   - Node proporciona APIs de **Streams** con `pause()`/`resume()` y eventos `drain` para controlar el flujo de datos:
-     ```ts
-     readable.pipe(writable, { end: false });
-     writable.on("drain", () => readable.resume());
-     readable.pause();
-     ```
-
-4. **Graceful shutdown en tests y producción**
-
-   - En entornos de test es común encontrar “handles” colgantes si no cerramos el servidor y las conexiones pendientes.
-   - Use siempre
-     ```ts
-     await fastify.close();
-     process.exit(0);
-     ```
-     para forzar el cierre limpio y evitar fugas de recursos.
-
-5. **Referencias útiles**
-   - Artículo visual: <https://www.builder.io/blog/visual-guide-to-nodejs-event-loop>
-   - Profundización en phases y ticks: <https://developer.ibm.com/tutorials/learn-nodejs-the-event-loop/>
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Fastify
-    participant DB
-    Note over Fastify: Event Loop<br/> (libuv)
-    Client->>Fastify: HTTP Request
-    Fastify->>DB: Query
-    DB-->>Fastify: Rows
-    Fastify-->>Client: JSON
-```
-
----
-
-## 2. Toolkit 2026 recomendado
+## 2. Selección de tecnologías y lenguajes de programación
 
 | Necesidad      | Librería / Tool                               | Motivo                                               |
 | -------------- | --------------------------------------------- | ---------------------------------------------------- |
@@ -120,7 +67,7 @@ _Nota:_ La lógica de negocio está en `domain/` y `application/`, **no** aquí.
 
 ---
 
-## 4. Docker‑compose de referencia (recorte)
+## 4. Configuración y despliegue de infraestructura para microservicios
 
 ```yaml
 version: "3.9"
@@ -168,7 +115,7 @@ Con esto, un **`docker compose up -d`** y el equipo está listo para el _hands�
 
 ---
 
-## 7. Gestión de dependencias y versionado (servicios, APIs y eventos)
+## 7. Gestión de dependencias y versionado de microservicios
 
 En microservicios el versionado no es un detalle: es **una interfaz viva** entre equipos.
 
@@ -178,22 +125,28 @@ En microservicios el versionado no es un detalle: es **una interfaz viva** entre
 - Evita dependencias transversales que acoplen servicios (p. ej. “shared‑utils” sin gobierno).
 - Para librerías compartidas, prefiere **paquetes versionados** (npm private/monorepo) y semver.
 
-### 7.2 Versionado de contratos
+### 7.2 Implementación de APIs y contratos de servicio
 
 - **HTTP APIs**: documenta con OpenAPI y valida compatibilidad (*backward compatible*).
 - **Eventos**: documenta con AsyncAPI o un esquema JSON; evita romper consumidores.
 - Técnica práctica: **Tolerant Reader** (el consumidor ignora campos desconocidos) + **Upcasters** cuando el evento evoluciona.
+- Añade **contract tests** (consumer‑driven) para detectar roturas antes de desplegar consumidores y productores.
 
 ---
 
-## 8. Comunicación entre microservicios (síncrona y asíncrona)
+## 8. Implementación de comunicación entre microservicios (síncrona y asíncrona)
+
+### 8.0 Patrones de comunicación entre microservicios (síncrona y asíncrona)
+
+- **Request/Response** (HTTP/gRPC): consultas y comandos inmediatos; requiere límites y resiliencia.
+- **Event Notification / Pub‑Sub**: “algo pasó” y los interesados reaccionan; reduce acoplamiento temporal.
+- **Message Queue / Work Queue**: distribuir trabajo y absorber picos (workers).
+- **Event‑Carried State Transfer**: eventos con estado suficiente para evitar llamadas de vuelta.
 
 ### 8.1 Síncrona (HTTP/gRPC)
 
 Útil para consultas y comandos que requieren respuesta inmediata. Reglas mínimas:
 
-- `timeout` corto + `retry` con *jitter* (solo si es idempotente).
-- `circuit breaker` y `bulkhead` para proteger el servicio llamador.
 - Contratos claros: errores estables (p. ej. 409 para conflicto de estado).
 
 ### 8.2 Asíncrona (mensajería/eventos)
@@ -206,7 +159,22 @@ En microservicios el versionado no es un detalle: es **una interfaz viva** entre
 
 ---
 
-## 9. Monitorización y gestión operativa (mínimo viable)
+### 8.3 Protocolos y formatos de intercambio de datos en microservicios
+
+- **Protocolos**: HTTP/1.1 (ubicuidad), HTTP/2 (multiplexing), gRPC (HTTP/2 + Protobuf), AMQP (RabbitMQ).
+- **Formatos**: JSON (DX), Protobuf/Avro (payloads compactos, *schema-first*), y consideraciones de compatibilidad.
+- Regla práctica: elige el formato por **latencia, ancho de banda, tooling y evolución de esquema** (no por moda).
+- Si el contrato es crítico y hay muchos consumidores, considera **schema registry** (Avro/Protobuf) y validación en CI.
+
+### 8.4 Gestión de errores y fallas en la comunicación
+
+- `timeout` corto por defecto + `retry` con *jitter* (solo si es idempotente).
+- `circuit breaker` y `bulkhead` para proteger al llamador y evitar fallos en cascada.
+- En asíncrono: idempotencia + reintentos + **DLQ** para mensajes “venenosos”.
+
+---
+
+## 9. Técnicas de monitoreo y gestión de microservicios
 
 Un microservicio en producción sin observabilidad es un “sistema sin panel de control”.
 
@@ -217,7 +185,7 @@ Un microservicio en producción sin observabilidad es un “sistema sin panel de
 
 ---
 
-## 10. Descubrimiento de servicios y configuración
+## 10. Uso de herramientas de descubrimiento y registro de servicios
 
 ### 10.1 Service discovery (según entorno)
 
@@ -225,7 +193,7 @@ Un microservicio en producción sin observabilidad es un “sistema sin panel de
 - **Kubernetes**: `Service` + DNS (`<svc>.<ns>.svc.cluster.local`) y *labels*.
 - Alternativas: Consul/Eureka para entornos no‑k8s o híbridos.
 
-### 10.2 Configuración por entorno
+### 10.2 Gestión de configuraciones y variables de entorno en microservicios
 
 - Variables de entorno (`DATABASE_URL`, `RABBIT_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT`).
 - No “secrets” en git; usa `.env` local + secret managers en despliegues reales.

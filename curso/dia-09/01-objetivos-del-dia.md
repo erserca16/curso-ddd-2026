@@ -1,6 +1,9 @@
 # Sesión 9 · Martes 24-feb-2026  
 **Duración:** 16:00 – 19:00
 **Tema global:** *Monitorización, troubleshooting y resiliencia en EDA (RabbitMQ + OTEL)*
+
+**Temario (referencia):** [5 · Tolerancia a fallos y resiliencia](../../NUEVO_TEMARIO.md#5-tolerancia-a-fallos-y-resiliencia-en-microservicios) · [7 · Monitorización y solución de problemas](../../NUEVO_TEMARIO.md#7-monitorización-y-solución-de-problemas-en-microservicios) · [13 · Patrones de comunicación en DDD](../../NUEVO_TEMARIO.md#13-patrones-de-comunicación-en-ddd)
+
 ## Objetivos y agenda
 
 - Continuar la exploración de EDA, centrándonos en la implementación práctica de la robustez y la observabilidad.

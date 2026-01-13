@@ -2,6 +2,8 @@
 **Duración:** 16:00 – 19:00  
 **Tema global:** *Introducción a la Arquitectura de Microservicios (y cómo encaja DDD/Hexagonal/CQRS/EDA)*
 
+**Temario (referencia):** [1 · Introducción a la arquitectura de microservicios](../../NUEVO_TEMARIO.md#1-introducción-a-la-arquitectura-de-microservicios) · [2 · Implementación de microservicios](../../NUEVO_TEMARIO.md#2-implementación-de-microservicios) · [3 · Comunicación y descubrimiento de servicios](../../NUEVO_TEMARIO.md#3-comunicación-y-descubrimiento-de-servicios) · [8 · Migración a microservicios](../../NUEVO_TEMARIO.md#8-migración-a-microservicios)
+
 ---
 
 ## Objetivos del día
@@ -66,7 +68,7 @@ En esta primera sesión se valida el entorno de desarrollo y se ejecuta la base 
 |------|--------|
 | Arquitectura Hexagonal | <https://alistair.cockburn.us/hexagonal-architecture/> |
 | DDD en la práctica | <https://martinfowler.com/tags/domain%20driven%20design.html> |
-| CQRS & Event Sourcing en Node | <https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs> |
+| CQRS en microservicios | <https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs> |
 | EDA y resiliencia | <https://martinfowler.com/articles/201701-event-driven.html> |
 
 ### Documentación oficial

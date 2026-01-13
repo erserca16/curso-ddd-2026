@@ -37,6 +37,12 @@ flowchart TB
 * Prometheus *tira* de las métricas cada N segundos; Loki y Tempo **reciben** push desde los agentes/SDK.
 * Grafana no almacena datos; sólo los visualiza y correlaciona.
 
+### 0.2 Uso de herramientas de monitorización y registro de logs
+
+- **Logs**: Loki/Promtail o stdout de contenedores con etiquetas útiles (`service_name`, `trace_id`).
+- **Métricas**: Prometheus (scrape) + Grafana (dashboards/alertas).
+- **Trazas**: OTEL + Tempo/Jaeger para encontrar el *critical path* y dependencias lentas.
+
 
 
 **Objetivo General:** Al finalizar esta clase queremos comprender los conceptos fundamentales de la observabilidad, cómo instrumentar aplicaciones Node.js con OpenTelemetry y utilizar herramientas como Grafana, Loki y Prometheus para monitorear, depurar y analizar el comportamiento de microservicios.
@@ -486,7 +492,7 @@ storage:
 
 ## Parte 2: Implementación Práctica y Casos de Uso
 
-### 4. Métricas de Aplicación y Negocio + Dashboards
+### 4. Monitoreo y control de métricas en entornos de microservicios
 
 **Más allá de las Métricas de Infraestructura:** No solo CPU/Memoria. Necesitamos métricas que reflejen la salud de la aplicación y el impacto en el negocio.
 
@@ -736,7 +742,12 @@ complex_operation_duration_ms_bucket{…}
 
 ---
 
-### 5. Alertas Automatizadas y Notificaciones
+### 5. Detección y prevención de fallas en microservicios (alertas y notificaciones)
+
+#### 5.1 Optimización y mejora continua en entornos de microservicios
+
+- Define SLOs (latencia, error rate) y usa *error budgets* para priorizar trabajo de fiabilidad.
+- Revisa incidentes (postmortems) y convierte hallazgos en automatización: alertas mejores, dashboards y runbooks.
 
 **¿Por qué Alertas?** Notificación proactiva de problemas antes de que los usuarios los reporten (o a gran escala).
 
@@ -864,7 +875,11 @@ curl -i -X POST "http://localhost:3002/replenish" \
 
 ---
 
-### 6. Ejercicio Integrado: Debugging Distribuido de un Problema Real
+### 6. Análisis y solución de problemas en microservicios (debugging distribuido)
+
+#### 6.1 Identificación y resolución de cuellos de botella y cuellos de rendimiento
+
+Usa trazas para identificar el *critical path* y métricas para validar saturación (CPU/memoria/DB/colas). Si el cuello es externo, aplica límites: timeouts, circuit breakers, caché o degradación controlada.
 
 **Escenario del Problema (Guiado por el instructor):**
 
@@ -921,7 +936,7 @@ curl -i -X POST "http://localhost:3002/replenish" \
 
 Esta parte conecta observabilidad con temas operativos: registro de servicios, configuración, orquestación, backup y recuperación.
 
-### 7. Descubrimiento/registro de servicios
+### 7. Implementación de sistemas de descubrimiento y registro de servicios
 
 - En **Compose**, el DNS interno resuelve por nombre de servicio.
 - En **Kubernetes**, se usa `Service` + DNS + *labels*.
@@ -929,20 +944,19 @@ Esta parte conecta observabilidad con temas operativos: registro de servicios, c
 
 Objetivo: que los servicios **no dependan de IPs** ni de configuración manual por entorno.
 
-### 8. Gestión de configuraciones y variables de entorno
+### 8. Gestión de configuraciones y variables de entorno en microservicios
 
 - `12-factor`: configuración por env vars (`DATABASE_URL`, `RABBIT_URL`, `OTEL_*`).
 - Separar **secrets** de config (vault/secret manager).
 - Validar config en arranque (fail-fast) y exponerla en `/ready` (sin filtrar secretos).
 
-### 9. Orquestación, autoscaling y capacidad
+### 9. Escalado automático y orquestación de contenedores en microservicios
 
 - Autoescalado (HPA) por CPU/RPS/latencia (cuando hay métricas fiables).
 - *Rate limiting* y *backpressure* para evitar “autodestrucción” por picos.
-- Estrategias de *rollout*: blue/green, canary, *feature flags*.
 
-### 10. Estrategias de respaldo y recuperación
+### 10. Estrategias de respaldo y recuperación en entornos de microservicios
 
 - Backups de base de datos (puntos de restauración, retención).
-- Para sistemas orientados a eventos: políticas de retención del event store + replays controlados.
+- Para sistemas orientados a eventos: retención de mensajes/eventos según SLA y *replays* controlados cuando sea posible.
 - Runbooks: procedimientos de recuperación probados (no solo documentados).
