@@ -1,4 +1,6 @@
-# Tema 4 — Fundamentos de DDD y transición al Modelo Rico
+# Módulo 9 — Domain-Driven Design (DDD): fundamentos (estratégico → táctico)
+
+> Este documento conecta DDD con límites de microservicios y modelos coherentes por contexto.
 
 ## Introducción a los pilares estratégicos de DDD
 
@@ -17,6 +19,8 @@ flowchart TD
     E --> J[Apoya al Core]
     F --> K[Comodities estandarizados]
 ```
+
+---
 
 ## 1. Lenguaje Ubicuo: La columna vertebral de DDD
 

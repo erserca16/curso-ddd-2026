@@ -1,4 +1,4 @@
-# Tema 3 (parte 2) — Puertos y Adaptadores en detalle
+# Módulo 12 — Patrones de arquitectura en DDD: Puertos y Adaptadores
 
 Objetivo: profundizar en la clasificación de puertos y adaptadores, su organización en Node.js y buenas prácticas para garantizar un acoplamiento mínimo y máxima testabilidad.
 
@@ -6,6 +6,21 @@ Objetivo: profundizar en la clasificación de puertos y adaptadores, su organiza
 
 - Un **Puerto** es una interfaz dentro de la capa de aplicación que define un contrato: _qué_ hace el sistema, sin detallar _cómo_.
 - Un **Adaptador** es la implementación concreta de ese contrato, en la capa de infraestructura: _cómo_ interactúa con una base de datos, un broker de mensajes o un framework HTTP.
+
+---
+
+## 0. Arquitectura por capas vs arquitectura hexagonal (por qué importa)
+
+Es habitual mezclar “arquitectura por capas” y “puertos/adaptadores”, así que conviene entender bien ambos enfoques.
+
+- **Arquitectura por capas** (presentación → lógica → datos) organiza responsabilidades, pero puede terminar con dependencias “hacia abajo” que contaminan el dominio (si el dominio depende de ORM/HTTP).
+- **Hexagonal** mantiene el dominio/aplicación en el centro y obliga a que la infraestructura dependa del core mediante puertos (DIP).
+
+En la práctica:
+
+- La **capa de presentación** suele ser un adaptador de entrada (HTTP/CLI/consumer).
+- La **capa de acceso a datos** y mensajería suelen ser adaptadores de salida (DB/MQ/APIs externas).
+- Los **Use Cases** (aplicación) coordinan puertos y ejecutan reglas de negocio sin detalles técnicos.
 
 ## 1. Taxonomía de puertos y adaptadores
 
@@ -192,4 +207,30 @@ describe("InventoryRepositoryPostgres", () => {
 });
 ```
 
+---
 
+## 8. Segregación de responsabilidades: comandos vs consultas (CQRS)
+
+Una fuente común de acoplamiento es “un endpoint que hace de todo”: valida, cambia estado, consulta y compone respuestas complejas. Esto se suele formalizar como **segregación de comandos y consultas**.
+
+- **Command**: intención de cambiar estado (p. ej. `ReserveStock`).
+  - Devuelve `204/202` o un *resource id*, pero evita devolver grandes lecturas.
+- **Query**: intención de leer estado (p. ej. `GetInventoryBySku`).
+  - No cambia estado; puede optimizarse con caché/proyecciones.
+
+En hexagonal, lo habitual es:
+
+- Commands → Use Case (puerto de entrada) → puertos de salida (repo/bus) → persistencia/eventos.
+- Queries → Query handler (puerto de entrada) → repos de lectura / read models.
+
+---
+
+## 9. Scope (ciclo de vida) y DI en microservicios
+
+El *scope* evita fugas de estado y reduce bugs difíciles:
+
+- **Singleton**: clientes (PrismaClient, RabbitMQ connection) y *SDKs* compartidos.
+- **Scoped/per-request**: repositorios/adaptadores que dependen del request o de un “unit of work”.
+- **Transient**: objetos sin estado (mappers, factories pequeñas).
+
+Regla práctica: si una dependencia mantiene estado mutable, evita que sea singleton salvo que esté diseñada para ello.

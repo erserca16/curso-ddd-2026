@@ -1,5 +1,18 @@
+# C4 Model & Structurizr DSL
 
-## Repaso Rápido: Aprendizajes Clave
+> Este material se usa en el cierre del curso como parte del bloque de estandarización, conclusiones y revisión de proyectos.
+
+## Estandarización de desarrollos
+
+- **Qué es estandarizar**: acordar convenciones y prácticas para que múltiples equipos puedan colaborar sin fricción.
+- **Estrategias**:
+  - guías de arquitectura (hex/DDD), convenciones de endpoints/eventos, versionado y compatibilidad.
+  - Definition of Done: tests, observabilidad mínima, ADRs y *runbooks*.
+- **Herramientas**: ADRs, C4, linters/formatters, pipelines CI/CD, repos de plantillas (*service templates*).
+- **Métricas**: latencia, error rate, throughput, lead time, change failure rate, MTTR.
+- **Revisión de proyectos**: evaluar coherencia de límites, contratos, operación y seguridad.
+
+## Repaso rápido: aprendizajes clave
 
 En las sesiones anteriores, hemos sentado una base sólida para la arquitectura de software moderna, especialmente en entornos de microservicios con Node.js.
 

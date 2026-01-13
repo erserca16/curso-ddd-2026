@@ -1,4 +1,4 @@
-# Tema 5 — CQRS: Fundamentos
+# Módulo 4 — Escalabilidad y rendimiento: CQRS (fundamentos)
 
 En este primer bloque de **CQRS** nos centraremos en los fundamentos esenciales que toda arquitectura debe contemplar antes de incorporar patrones más avanzados. Sin rodeos, analizaremos por qué dividir lecturas y escrituras, cómo se relacionan sus componentes clave y cómo se materializa este enfoque en un ejemplo real de dominio.
  
@@ -248,3 +248,43 @@ graph TD
   2. ¿True or False?: CQRS requiere siempre Event Sourcing.  
   3. Nombra tres ventajas de separar modelos de lectura/escritura.  
 
+---
+
+## 5. Otras estrategias de escalado y rendimiento
+
+CQRS es una herramienta potente, pero no es la única. En microservicios solemos combinar:
+
+### 5.1 ¿Cómo detectar problemas de escalado?
+
+- **Latencia** (P95/P99) creciendo con RPS estable.
+- **Saturación**: CPU al 90–100%, *event loop lag*, conexiones DB agotadas.
+- **Errores**: aumento de `5xx`, *timeouts* y *retries*.
+- **Backlogs**: colas creciendo (broker), *consumer lag*.
+
+### 5.2 Escalado horizontal vs vertical
+
+- **Horizontal**: más réplicas del servicio + balanceo → el camino habitual.
+- **Vertical**: más CPU/RAM → útil para estabilizar, pero tiene techo y coste.
+
+### 5.3 Replicación y separación de lectura
+
+- Read replicas + *routing* de consultas.
+- Read models especializados (proyecciones) para endpoints calientes.
+
+### 5.4 Caché
+
+- Caché por endpoint/route (TTL) para lecturas repetidas.
+- Caché de dominio (con invalidación) para agregados con alta lectura.
+- Ojo: caché sin *observabilidad* = bugs invisibles.
+
+### 5.5 Lambdas/Jobs para cargas no continuas
+
+- Para picos (campañas), mover procesamiento pesado a workers o funciones.
+- Mantén idempotencia y trazabilidad (reintentos).
+
+### 5.6 Balanceo y control de tráfico
+
+- Load balancers + *rate limiting*.
+- *Bulkheads* y colas internas para absorber picos sin colapsar el core.
+
+---

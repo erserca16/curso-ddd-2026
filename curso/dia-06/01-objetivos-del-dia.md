@@ -1,4 +1,6 @@
-# Sesión 6 · 13-may-2025
+# Sesión 6 · Jueves 12-feb-2026
+**Duración:** 16:00 – 19:00
+**Tema global:** *Escalabilidad y rendimiento: CQRS (separación comando/consulta) aplicado a microservicios*
 
 ## Objetivos del día
 
@@ -16,3 +18,17 @@ Durante esta sesión profundizaremos en los fundamentos y en la implementación 
 Al finalizar la clase, los participantes deberán sentirse cómodos creando comandos, handlers y proyecciones simples, además de poder evaluar cuándo tiene sentido aplicar CQRS en un sistema determinado.
 
 > “No es solo separar lectura y escritura: es entender cuándo, cómo y por qué hacerlo.”
+
+---
+
+## Agenda (3h)
+
+| Hora | Bloque | Contenido |
+|------|--------|-----------|
+| 16:00–16:10 | Repaso y foco | Qué problema queremos resolver con CQRS. |
+| 16:10–16:35 | Problemas de escalado | Señales, cuellos de botella y límites del CRUD. |
+| 16:35–17:05 | CQRS fundamentals | Commands, queries, handlers y contratos. |
+| 17:05–17:15 | Descanso | Pausa breve. |
+| 17:15–17:45 | Proyecciones y lectura | Read models, caché y estrategias de rendimiento. |
+| 17:45–18:20 | Otras estrategias | Réplicas, balanceo, jobs y control de tráfico. |
+| 18:20–19:00 | Taller | Diseñar una separación read/write y su proyección mínima. |

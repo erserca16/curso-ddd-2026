@@ -1,4 +1,4 @@
-# Sesión 7 · 14-may-2025  
+# Sesión 7 · Martes 17-feb-2026  
 ## Conceptos principales de la sesión anterior
 
 - Identificar que problemas se pueden resolver con CQRS

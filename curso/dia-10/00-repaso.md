@@ -1,4 +1,4 @@
-# Sesión 10 · 20-may-2025  
+# Sesión 10 · Jueves 26-feb-2026  
 ## Repaso exprés de la Sesión 9
 
 1.	Gestión de errores en EDA: Uso de colas de retry y Poison Queue (Dead Letter Queue), con integración en Grafana para observabilidad.

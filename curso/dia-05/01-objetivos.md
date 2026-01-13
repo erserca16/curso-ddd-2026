@@ -1,4 +1,6 @@
-# Objetivos del Día – Tema 4: Patrones Tácticos Avanzados en DDD
+# Sesión 5 · Martes 10-feb-2026  
+**Duración:** 16:00 – 19:00  
+**Tema global:** Patrones Tácticos Avanzados en DDD
 
 ## Propósito General
 
@@ -31,3 +33,16 @@ Al final de la sesión, los estudiantes deberán ser capaces de:
 * Detectar errores estructurales comunes en modelos tácticos y corregirlos.
 * Formular mejores decisiones de diseño a partir de una evaluación crítica.
 
+---
+
+## Agenda (3h)
+
+| Hora | Bloque | Contenido |
+|------|--------|-----------|
+| 16:00–16:10 | Repaso y objetivos | Qué vamos a consolidar hoy. |
+| 16:10–16:40 | Aggregates | Invariantes, límites transaccionales y errores típicos. |
+| 16:40–17:10 | Domain Events | Semántica, publicación, naming y evolución. |
+| 17:10–17:20 | Descanso | Pausa breve. |
+| 17:20–17:55 | Servicios, repos y specs | Contratos, composición y anti‑patrones. |
+| 17:55–18:35 | Taller | Refactor guiado aplicando patrones al dominio del curso. |
+| 18:35–19:00 | Checklist y revisión | Evaluación del diseño, trade-offs y dudas. |

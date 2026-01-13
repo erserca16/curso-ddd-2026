@@ -1,14 +1,15 @@
-# Día 2: Construyendo Sistemas EDA Robustos y Observables con RabbitMQ
+# Sesión 9 · EDA práctico: resiliencia y observabilidad con RabbitMQ
 
 Hoy, nos centramos en la **robustez y la observabilidad** de estos sistemas, utilizando **RabbitMQ con Node.js**. ¿Qué pasa cuando las cosas fallan? ¿Cómo evolucionamos nuestros eventos sin romper todo? ¿Y cómo sabemos qué está pasando dentro de nuestro flujo de eventos?
 
-**Configuración del Entorno Práctico (10 min):**
+**Preparación del entorno (10 min):**
 
 1. Asegúrense de tener Docker y Node.js (v20+ recomendado) instalados.
-2. Clonen el repositorio base para los ejercicios de hoy: `git clone [URL_DEL_REPO_DIA_2]`.
-3. Dentro del repositorio, ejecuten `docker-compose up -d` para iniciar RabbitMQ en un contenedor. Esto nos dará una instancia limpia y lista para usar.
+2. En este repositorio, entren a `curso/dia-09/ejercicios`.
+3. Instalen dependencias: `npm install`.
+4. Levanten RabbitMQ: `docker compose up -d`.
 
-**`docker-compose.yml`:**
+**`curso/dia-09/ejercicios/docker-compose.yml`:**
 
 ```yaml
 services:
@@ -27,9 +28,7 @@ volumes:
   rabbitmq_data:
 ```
 
-1. Crear una nueva carpeta e iniciar proyecto Node.js: `npm init -y`.
-2. Instalar las dependencias del proyecto Node.js: `npm install amqplib`.
-3. Pueden acceder a la interfaz de gestión de RabbitMQ en `http://localhost:15672` (user: `user`, pass: `password`) para ver exchanges, colas y mensajes.
+5. Interfaz de gestión de RabbitMQ: `http://localhost:15672` (user: `user`, pass: `password`) para ver exchanges, colas y mensajes.
 
 ---
 

@@ -26,7 +26,7 @@ export class OrderServiceHttpAdapter implements OrderServicePort {
   async replenish(sku: string): Promise<void> {
     try {
       return this.fetchWithErrorHandling<void>(
-        `${this.config.orderServiceUrl}/order`,
+        `${this.config.orderServiceUrl}/replenish`,
         {
           method: "POST",
           body: JSON.stringify({ sku }),

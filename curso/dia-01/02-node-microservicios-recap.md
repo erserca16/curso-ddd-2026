@@ -1,4 +1,4 @@
-# Sesión 1 · Microservicios en Node.js – Estado del Arte (2025)
+# Sesión 1 · Microservicios en Node.js – Estado del Arte (2026)
 
 > _Spoiler:_ Node no es la panacea, pero si se emplea con rigor y TypeScript, junto a su modelo asíncrono podemos crear aplicaciones de alto rendimiento.
 
@@ -57,7 +57,7 @@ sequenceDiagram
 
 ---
 
-## 2. Toolkit 2025 recomendado
+## 2. Toolkit 2026 recomendado
 
 | Necesidad      | Librería / Tool                               | Motivo                                               |
 | -------------- | --------------------------------------------- | ---------------------------------------------------- |
@@ -165,3 +165,67 @@ Con esto, un **`docker compose up -d`** y el equipo está listo para el _hands�
 - Límite de 500 MB RAM por container (k8s/compose)
 
 > **El checklist sirve para** evitar incidentes serios a las 3 a.m.
+
+---
+
+## 7. Gestión de dependencias y versionado (servicios, APIs y eventos)
+
+En microservicios el versionado no es un detalle: es **una interfaz viva** entre equipos.
+
+### 7.1 Dependencias en Node (prácticas recomendadas)
+
+- Usa **lockfiles** (`package-lock.json`) y CI reproducible.
+- Evita dependencias transversales que acoplen servicios (p. ej. “shared‑utils” sin gobierno).
+- Para librerías compartidas, prefiere **paquetes versionados** (npm private/monorepo) y semver.
+
+### 7.2 Versionado de contratos
+
+- **HTTP APIs**: documenta con OpenAPI y valida compatibilidad (*backward compatible*).
+- **Eventos**: documenta con AsyncAPI o un esquema JSON; evita romper consumidores.
+- Técnica práctica: **Tolerant Reader** (el consumidor ignora campos desconocidos) + **Upcasters** cuando el evento evoluciona.
+
+---
+
+## 8. Comunicación entre microservicios (síncrona y asíncrona)
+
+### 8.1 Síncrona (HTTP/gRPC)
+
+Útil para consultas y comandos que requieren respuesta inmediata. Reglas mínimas:
+
+- `timeout` corto + `retry` con *jitter* (solo si es idempotente).
+- `circuit breaker` y `bulkhead` para proteger el servicio llamador.
+- Contratos claros: errores estables (p. ej. 409 para conflicto de estado).
+
+### 8.2 Asíncrona (mensajería/eventos)
+
+Útil para desacoplar, absorber picos y reducir latencia percibida.
+
+- Publica **eventos de dominio** (“OrderCreated”) y no “comandos remotos” disfrazados.
+- Requiere idempotencia por `messageId`/`eventId` y **DLQ** (Dead Letter Queue).
+- Para consistencia entre DB y broker, usa **Outbox** (lo trabajamos en sesiones posteriores).
+
+---
+
+## 9. Monitorización y gestión operativa (mínimo viable)
+
+Un microservicio en producción sin observabilidad es un “sistema sin panel de control”.
+
+- **Logs estructurados** (p. ej. `pino`) con `traceId`, `service`, `route`, `eventId`.
+- **Métricas RED/GOLD**: *Rate, Errors, Duration* / *Latency, Errors, Traffic, Saturation*.
+- **Trazas distribuidas** con OpenTelemetry (spans por request + spans por consumo/publicación de mensajes).
+- **Health checks**: readiness (dependencias) vs liveness (proceso vivo).
+
+---
+
+## 10. Descubrimiento de servicios y configuración
+
+### 10.1 Service discovery (según entorno)
+
+- **Docker Compose**: nombres de servicio como DNS interno (p. ej. `postgres`, `rabbit`).
+- **Kubernetes**: `Service` + DNS (`<svc>.<ns>.svc.cluster.local`) y *labels*.
+- Alternativas: Consul/Eureka para entornos no‑k8s o híbridos.
+
+### 10.2 Configuración por entorno
+
+- Variables de entorno (`DATABASE_URL`, `RABBIT_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT`).
+- No “secrets” en git; usa `.env` local + secret managers en despliegues reales.

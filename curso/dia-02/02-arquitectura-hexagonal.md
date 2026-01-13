@@ -1,4 +1,4 @@
-# Tema 3 (parte 1) — Arquitectura Hexagonal · Fundamentos y Beneficios
+# Módulo 10 — Arquitectura Hexagonal y la aplicación de DDD
 
 > **Objetivo:** comprender **por qué** y **cuándo** emplear el patrón, más allá del simple *how-to*.
 
@@ -224,7 +224,31 @@ export async function registerRoutes(app: FastifyInstance) {
 ```
 ---
 
-## 6. Síntomas de mal implementación
+## 6. Convirtiendo un microservicio a arquitectura hexagonal (guía práctica)
+
+Un patrón común en equipos Node es partir de un servicio “framework‑first” (controladores grandes + repositorios mezclados) y evolucionar hacia un core estable. Un camino seguro:
+
+1. **Identifica el caso de uso principal** (p. ej. `ReserveStock`) y escribe su intención en 1 frase.
+2. **Extrae el dominio**: entidades/VO con invariantes (sin Fastify/Prisma/Rabbit).
+3. **Define puertos** desde el dominio o aplicación:
+   - Salida: `InventoryRepositoryPort`, `EventPublisherPort`.
+   - Entrada: un `UseCase` (o un *application service*) invocable desde HTTP/consumidores.
+4. **Crea adaptadores finos**:
+   - HTTP: valida/parsea, delega al Use Case, traduce errores a HTTP.
+   - DB: implementa `InventoryRepositoryPort` con Prisma/Postgres.
+   - Mensajería: publica/consume eventos; añade idempotencia y *retry*.
+5. **Introduce DI** (Awilix) y controla el *scope*:
+   - Cliente DB como singleton; repositorios por request/scope.
+6. **Asegura tests por capa**:
+   - Dominio: unit tests sin I/O.
+   - Aplicación: tests de Use Cases con dobles de puertos.
+   - Infra: integración (DB/broker) y contract tests (si aplica).
+
+> Regla de oro: el dominio debe poder evolucionar y testearse sin arrancar infraestructura.
+
+---
+
+## 7. Síntomas de mal implementación
 
 - Adapters con lógica de negocio: rutas que validan reglas complejas o calculan totales.  
 - Dominio importando librerías externas (axios, fs, etc.).  

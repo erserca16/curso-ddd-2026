@@ -43,6 +43,7 @@ export class OrderEventsAdapter implements OrderEventsPort {
       );
     } catch (error) {
       console.error("Error publishing replenish event", error);
+      throw error;
     }
   }
 }

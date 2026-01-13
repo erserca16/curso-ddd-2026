@@ -1,9 +1,37 @@
-# Sesión 3 · 07-may-2025  
-## Tema 3 (parte 2) — Arquitectura Hexagonal Avanzada y Testing
+# Sesión 3 · Martes 03-feb-2026  
+## Límites de dominio + hexagonal avanzada: scope, adapters y testing
 
-**Objetivo:** finalizar la estructura hexagonal de `inventory-service`, dominar ciclos de vida de dependencias y asegurar calidad con tests unitarios y de integración.
+**Objetivo:** definir límites claros para el dominio de inventario y reforzar la implementación hexagonal (scopes, adapters) con tests unitarios y de integración.
 
 ---
+
+## 0. Delimitar el dominio de inventario (bounded context)
+
+Antes de escribir más código, fijamos el límite del servicio. Un inventario suele incluir:
+
+- **Stock disponible** (prometible).
+- **Reserva** (bloqueo reversible por pedido).
+- **Reposición** (incremento de stock).
+- **Movimientos** (auditoría: reserve/release/replenish).
+
+Y suele **excluir** (para evitar mezclar modelos):
+
+- **Precio** y catálogo (otro contexto).
+- **Estado de pedido** (otro contexto).
+- **Pagos/facturación** (otro contexto).
+
+### 0.1 Heurística rápida de límites
+
+- Si una regla cambia por razones distintas, separa el contexto.
+- Si un término cambia de significado (“stock” en logística vs e‑commerce), probablemente hay más de un modelo.
+- Si hay *ownership* distinto, separa por límite de propiedad.
+
+### 0.2 Contratos de integración mínimos
+
+- API (sincrónica): consultas puntuales como “GET inventory by sku”.
+- Eventos (asíncronos): hechos como `ProductInventoryReserved`, `ProductInventoryReleased`, `ProductInventoryReplenished`.
+
+> En este curso, el `inventory-service` será un bounded context pequeño pero completo, para practicar arquitectura + comunicación.
 
 ## 1. Preparación y verificación preliminar
 
@@ -139,8 +167,6 @@ describe('ReserveStockUseCase - Unit Tests', () => {
   })  
 })
 ```
-
-Estos tests corren en milisegundos y no necesitan Docker ni base de datos.
 
 ---
 

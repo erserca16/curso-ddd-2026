@@ -1,4 +1,4 @@
-# Event-Driven Architecture (EDA) Fundamentos
+# Módulo 6 — Patrones y buenas prácticas en microservicios: EDA (fundamentos)
 
 ## **Parte I: Fundamentos de Event-Driven Architecture**
 
@@ -104,6 +104,44 @@ end
 | Escalabilidad Independiente | Trazabilidad            |
 | Resiliencia ante fallos            | Consistencia Eventual            |
 | Time to market            | Coordinación de eventos            |
+---
+
+## **Parte II: Patrones y buenas prácticas de microservicios (más allá del broker)**
+
+### 6. API Gateway y API Composition
+
+En microservicios es habitual que un cliente necesite datos de múltiples servicios. Dos enfoques:
+
+- **API Gateway / BFF**: el borde compone respuestas para el cliente.
+- **Service-to-service chaining**: un servicio llama a otro para “componer”.
+
+Regla práctica: evita *service chaining* para composición de UX porque:
+
+- Multiplica latencia y puntos de fallo.
+- Dificulta *ownership* (“¿quién rompió el flujo?”).
+
+En su lugar:
+
+- El Gateway/BFF compone por **lecturas** (queries) y mantiene las **escrituras** como comandos claros.
+- Para composición compleja, usa read models/proyecciones (CQRS) o vistas materializadas.
+
+### 7. Seguridad en microservicios orientados a eventos
+
+EDA no elimina la seguridad; la desplaza a más puntos:
+
+- **Identidad service-to-service**: mTLS o JWT con *audience* por servicio.
+- **Autorización en broker**: permisos por exchange/topic/queue (principio de menor privilegio).
+- **Validación de esquemas**: rechazar eventos inválidos antes de tocar el dominio.
+- **Protección de datos**: evita PII en eventos; cifra payloads sensibles; rota secretos.
+- **Trazabilidad**: propaga `correlationId`/`traceId` para auditoría y respuesta a incidentes.
+
+### 8. Buenas prácticas de gestión (operación y evolución)
+
+- **Idempotencia** por diseño (consumidores tolerantes a duplicados).
+- **Versionado** y compatibilidad: tolerant reader + upcasters (ya visto en ejemplos).
+- **Observabilidad**: métricas por cola/consumer, DLQ visible y runbooks.
+- **Definición de límites**: eventos del dominio, no “eventos técnicos” para coordinar CRUD.
+
 ---
 
 ### 1. Anatomía de un Sistema EDA

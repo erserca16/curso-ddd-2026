@@ -1,6 +1,6 @@
-# 04-avance-proyecto · Inventory Service – Sesión 2
+# Avance del proyecto · Inventory Service — Sesión 2
 
-Objetivo de la práctica (1 hora):
+Bloque práctico (60 min dentro de la sesión):
 Poner en marcha el esqueleto hexagonal de inventory-service, trabajar puertos, adaptadores y DI, y arrancar con Prisma.
 
 Descripción del servicio:
@@ -57,7 +57,7 @@ d) Arranque y DI
 
 - Genera Prisma Client con npx prisma generate
 - Ejecuta npm run dev y observa logs de conexión
-- Comprueba curl http://localhost:3000/health responde correctamente
+- Comprueba `curl http://localhost:3000/health` (local) o `curl http://localhost:3001/health` (Docker Compose) y valida que responde correctamente
 
 4. Reflexión y debate (15 min)
 

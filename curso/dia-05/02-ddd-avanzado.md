@@ -1,4 +1,6 @@
-# Tema 4 – Patrones Tácticos Avanzados en Domain-Driven Design
+# Módulo 9 — DDD (táctico): patrones avanzados
+
+> Este documento profundiza en patrones tácticos de DDD y en cómo evaluarlos en servicios Node con arquitectura hexagonal.
 
 > **Propósito de la sesión** → alcanzar una comprensión rigurosa y operacional de los patrones tácticos fundamentales en DDD, con énfasis en su implementación idiomática en entornos Node.js. Se busca que el participante no solo internalice los conceptos, sino que sea capaz de articularlos como base arquitectónica duradera y evolutiva.
 

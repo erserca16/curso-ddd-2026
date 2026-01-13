@@ -76,6 +76,9 @@ services:
     depends_on:
       - postgres
       - rabbit
+    environment:
+      - RABBITMQ_URL=amqp://rabbit:5672
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
 
   # Inventory Client API
   inventory-api:

@@ -1,4 +1,4 @@
-# 03-avance-proyecto · Inventory Service – Sesión 4
+# Avance del proyecto · Inventory Service — Sesión 4
 
 Objetivo: definir el dominio de inventario en términos de negocio, identificar conceptos clave y traducirlos a componentes DDD dentro de inventory-service.
 
@@ -51,9 +51,9 @@ El Inventory Context queda aislado dentro de inventory-service:
 
 | Evento           | Descripción                                    |
 | ---------------- | ---------------------------------------------- |
-| StockReserved    | Bloquea N unidades para un pedido (orderId)    |
-| StockReleased    | Libera reserva (pedido cancelado)              |
-| StockReplenished | Añade unidades al inventario (compra recibida) |
+| ProductInventoryReserved    | Bloquea N unidades para un pedido (orderId)    |
+| ProductInventoryReleased    | Libera reserva (pedido cancelado)              |
+| ProductInventoryReplenished | Añade unidades al inventario (compra recibida) |
 
 ---
 
@@ -70,8 +70,8 @@ El Inventory Context queda aislado dentro de inventory-service:
 
 ## 6. Puertos (Ports)
 
-- Mejorar InventoryProductPort
-- Implementar InventoryEventPort
+- Mejorar `ProductInventoryRepositoryPort`
+- Implementar `ProductInventoryEventsPort`
 
 ---
 
@@ -79,18 +79,18 @@ El Inventory Context queda aislado dentro de inventory-service:
 
 | Use Case              | Descripción                                        |
 | --------------------- | -------------------------------------------------- |
-| ReserveStockUseCase   | Bloquea unidades si hay stock, emite StockReserved |
-| ReleaseStockUseCase   | Libera reserva, emite StockReleased                |
-| ReplenishStockUseCase | Añade unidades, emite StockReplenished             |
-| GetInventoryUseCase   | Recupera cantidad actual para un SKU               |
+| ReserveInventoryUseCase   | Bloquea unidades si hay stock, emite `ProductInventoryReserved` |
+| ReleaseInventoryUseCase   | Libera reserva, emite `ProductInventoryReleased`                |
+| ReplenishInventoryUseCase | Añade unidades, emite `ProductInventoryReplenished`             |
+| GetInventoryUseCase       | Recupera cantidad actual para un SKU                             |
 
 
-ReserveStockUseCase:
+ReserveInventoryUseCase:
 
 ```mermaid
 sequenceDiagram
     participant API as Inventory API
-    participant UseCase as ReserveStockUseCase
+    participant UseCase as ReserveInventoryUseCase
     participant Aggregate as ProductInventory
     participant Repo as InventoryRepository
     
@@ -101,11 +101,11 @@ sequenceDiagram
     Aggregate->>Aggregate: Valida stock
     Aggregate->>Aggregate: Actualiza estado
     UseCase->>Repo: save(inventory)
-    UseCase->>EventPort: emit StockReserved
+    UseCase->>EventPort: emit ProductInventoryReserved
 ```
 ---
 
-## 8. Contrato de API (inventory-api)
+## 8. Contrato de API (inventory-service)
 
 | Método | Ruta                      | Entrada                          | Salida             |
 | ------ | ------------------------- | -------------------------------- | ------------------ |
@@ -113,5 +113,3 @@ sequenceDiagram
 | POST   | /inventory/:sku/reserve   | { qty: number, orderId: string } | 204 No Content     |
 | POST   | /inventory/:sku/release   | { qty: number, orderId: string } | 204 No Content     |
 | POST   | /inventory/:sku/replenish | { qty: number }                  | 204 No Content     |
-
-

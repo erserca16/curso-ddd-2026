@@ -1,17 +1,33 @@
-# Sesión 7 · 14-may-2025  
+# Sesión 7 · Martes 17-feb-2026  
+**Duración:** 16:00 – 19:00
+**Tema global:** *CQRS avanzado + patrones de comunicación (Outbox, Saga, Process Manager) y resiliencia*
 ## Objetivos y roadmap de la sesión
 
 - Sincronizar sprint: PR de ayer revisados  
 - **Event Sourcing avanzado**: Comprender append-only y versionado  
 - **Patrón Outbox + Exactly-Once**: Diseño sin fantasías  
 - **Saga/Process Manager** intro: Choreography vs Orchestration  
-- Lab: `PayOrder` Saga inicial: Estado de saga en tabla  
+- Lab: Saga de checkout (reserva → creación) + compensaciones  
 - Concept Quiz 07: Validación del aprendizaje  
 
 ### Metas de código
 
-1. Persistir eventos `OrderPaid` y `StockReserved`.  
+1. Persistir eventos `OrderCreated` y `ProductInventoryReserved`.  
 2. Outbox funcionando con deduplicación.  
 3. Proyección `order_status` actualizada por Saga.  
 
 *Dejar listo para la sesión 8 (EDA).*  
+
+---
+
+## Agenda (3h)
+
+| Hora | Bloque | Contenido |
+|------|--------|-----------|
+| 16:00–16:10 | Repaso y sincronización | Revisión de PRs y acuerdos de diseño. |
+| 16:10–16:40 | Event Sourcing avanzado | Append-only, replay y versionado de eventos. |
+| 16:40–17:10 | Outbox Pattern | Persistencia fiable, deduplicación e idempotencia. |
+| 17:10–17:20 | Descanso | Pausa breve. |
+| 17:20–17:50 | Sagas / Process Managers | Orquestación vs coreografía y compensaciones. |
+| 17:50–18:20 | Resiliencia | Retries, timeouts, DLQ y circuit breaker (criterio práctico). |
+| 18:20–19:00 | Taller | Conectar flujo de checkout con eventos + outbox. |

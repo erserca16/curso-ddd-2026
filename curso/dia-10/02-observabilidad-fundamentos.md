@@ -2,7 +2,7 @@
 
 Mapa rápido del tool‑chain (¿qué es cada cosa y para qué sirve?)
 
-| Herramienta                     | Rol en el stack                                                                                                           | ¿Por qué la elegimos en 2025?                                                                            |
+| Herramienta                     | Rol en el stack                                                                                                           | ¿Por qué la elegimos en 2026?                                                                            |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | **Prometheus**                  | Base de datos de series temporales (TSDB). *Scrapea* métricas vía HTTP y da un potente lenguaje de consulta (**PromQL**). | Estándar CNCF, pull‑based → menos *overhead*, enorme ecosistema de *exporters* y *rules* reutilizables.  |
 | **Grafana**                     | UI unificada: dashboards, alertas, exploración de métricas/logs/trazas.                                                   | Abstrae múltiples *back‑ends*; paneles listos, alertas visuales y enlaces cruzados.                      |
@@ -12,6 +12,8 @@ Mapa rápido del tool‑chain (¿qué es cada cosa y para qué sirve?)
 | **Promtail**                    | Agente *daemon* que lee ficheros de log y los envía a Loki con etiquetas.                                                 | Config YAML sencilla, sin *sidecar* pesado (a diferencia de Logstash o Fluend).                          |
 | **OTEL Collector** *(opcional)* | Proxy/roteador que recibe telemetría, transforma y re‑exporta a uno o varios *back‑ends*.                                 | Desacopla tu app de la infraestructura de observabilidad; centraliza *sampling*, *batching* y seguridad. |
 | **Docker Compose**              | Orquestador local para levantar todo el stack rápidamente.                                                                | Nada de instalar cada pieza a mano; reproducible por los alumnos en cualquier OS.                        |
+
+> Nota: el stack base del repositorio (`project/docker-compose.yml`) levanta Prometheus + Grafana (además de Postgres/RabbitMQ). Para un stack completo con Loki/Tempo, usa `curso/dia-10/ejercicios/docker-compose.yml`.
 
 ### 0.1 Cómo se relacionan entre sí
 
@@ -706,12 +708,16 @@ app
 
 3.  Reiniciar `docker-compose` y la app Node.js.
 
-4.  Generar algunas órdenes:
+4.  Generar tráfico (ejemplo con el proyecto del curso):
 
 ```bash
-curl -X POST "http://localhost:3002/checkout?success=true"
-curl -X POST "http://localhost:3002/checkout?success=true"
-curl -X POST "http://localhost:3002/checkout?success=false"
+curl -X POST "http://localhost:3002/replenish" \
+  -H "Content-Type: application/json" \
+  -d '{"sku":"ABC-1234-AB","quantity":10}'
+
+curl -X POST "http://localhost:3002/replenish" \
+  -H "Content-Type: application/json" \
+  -d '{"sku":"ABC-1234-AB","quantity":5}'
 ```
 
 ```bash
@@ -839,17 +845,15 @@ _(Nota: `http_server_requests_seconds_count` es una métrica estándar que OTEL 
 
 2.  Simular Errores para Disparar la Alerta:
 
-- Generar varias peticiones que fallen al endpoint `/checkout` de tu app Node.js:
+- Opción A (infra): parar RabbitMQ para provocar fallos reales al publicar (debería impactar en `/replenish`).
+- Opción B (app): crear un endpoint `/error` temporal que devuelva 500.
+
+Ejemplo de llamada:
 
 ```bash
-curl -X POST "http://localhost:3002/checkout?success=false"
-# Repetir varias veces en un minuto
-```
-
-- O si tienes un endpoint `/error` que siempre da 500:
-
-```bash
-curl http://localhost:3002/error # (Asegúrate que este endpoint existe y es instrumentado)
+curl -i -X POST "http://localhost:3002/replenish" \
+  -H "Content-Type: application/json" \
+  -d '{"sku":"ABC-1234-AB","quantity":10}'
 ```
 
 3.  Verificar Alertas:
@@ -910,3 +914,35 @@ curl http://localhost:3002/error # (Asegúrate que este endpoint existe y es ins
 - Basado en el hallazgo (ej. `ServicioD` es lento):
   - **Corto plazo:** Implementar un timeout más agresivo y un circuit breaker para `ServicioD`. Cachear respuestas de `ServicioD` si los datos no son ultra-críticos en tiempo real. ¿Carga condicional de datos de marketing?
   - **Largo plazo:** Hablar con el equipo de `ServicioD` para que mejoren su rendimiento o provean una API más eficiente. ¿Reemplazar `ServicioD`?
+
+---
+
+## Parte 3: Operación de microservicios
+
+Esta parte conecta observabilidad con temas operativos: registro de servicios, configuración, orquestación, backup y recuperación.
+
+### 7. Descubrimiento/registro de servicios
+
+- En **Compose**, el DNS interno resuelve por nombre de servicio.
+- En **Kubernetes**, se usa `Service` + DNS + *labels*.
+- En entornos híbridos, se usan herramientas como **Consul** (catálogo) y *health checks* activos.
+
+Objetivo: que los servicios **no dependan de IPs** ni de configuración manual por entorno.
+
+### 8. Gestión de configuraciones y variables de entorno
+
+- `12-factor`: configuración por env vars (`DATABASE_URL`, `RABBIT_URL`, `OTEL_*`).
+- Separar **secrets** de config (vault/secret manager).
+- Validar config en arranque (fail-fast) y exponerla en `/ready` (sin filtrar secretos).
+
+### 9. Orquestación, autoscaling y capacidad
+
+- Autoescalado (HPA) por CPU/RPS/latencia (cuando hay métricas fiables).
+- *Rate limiting* y *backpressure* para evitar “autodestrucción” por picos.
+- Estrategias de *rollout*: blue/green, canary, *feature flags*.
+
+### 10. Estrategias de respaldo y recuperación
+
+- Backups de base de datos (puntos de restauración, retención).
+- Para sistemas orientados a eventos: políticas de retención del event store + replays controlados.
+- Runbooks: procedimientos de recuperación probados (no solo documentados).

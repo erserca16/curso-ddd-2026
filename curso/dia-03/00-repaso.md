@@ -1,13 +1,14 @@
-# Sesión 3 · 07-may-2025  
+# Sesión 3 · Martes 03-feb-2026  
 ## Repaso exprés de la Sesión 2
 
-Antes de profundizar en TEMA 3 (continuación de Arquitectura Hexagonal), conviene echar un vistazo rápido a los aprendizajes y “tareas de brillo” que dejamos listos.
+Antes de profundizar en **límites de dominio** y continuar consolidando Arquitectura Hexagonal, conviene repasar los aprendizajes y “tareas de brillo” que dejamos listos.
 
-Tema                   | Insight clave                                                      | Acción inmediata
-----------------------|--------------------------------------------------------------------|---------------------------------------------------------------
-Ports & Adapters      | Definimos puertos muy específicos (1–3 métodos) y adaptadores finos | Revisa tu código: ¿algún handler HTTP mezcla validaciones o reglas de negocio? Si es así, trasládalas a un Use Case.
-DI / Awilix           | El container se inyecta desde el arranque, nunca se importa global | Abre tus módulos de dominio y busca llamadas a `container.resolve` – deben estar solo en la capa de infraestructura o en main.ts.
-Hexagonal vs. Onion   | Hexagonal es asimétrico (puertos vs. adaptadores); Onion usa capas concéntricas | En tu monolito legacy, discute cuándo te convendría más cada enfoque: ¿prefieres simetría o centralidad de dominio?
+Tema | Insight clave | Acción inmediata
+-----|--------------|----------------
+Ports & Adapters | Puertos específicos (1–3 métodos) + adaptadores finos reducen el acoplamiento | Revisa tus handlers HTTP: si mezclan reglas de negocio, muévelas a un Use Case.
+DI / Awilix | El container se “cablea” en el arranque; el dominio no resuelve dependencias | Busca `container.resolve` fuera de `main.ts`/infra y elimínalo del core.
+Hexagonal vs. Clean/Onion | Hexagonal enfatiza entradas/salidas; Clean/Onion enfatizan capas concéntricas | Identifica qué decisión te aporta más valor hoy: ¿cambiar infraestructura sin tocar dominio o reforzar capas por política?
+Límites de dominio | Sin límites claros, los servicios tienden a “mezclar modelos” y crecer sin control | Escribe 2 términos que cambian de significado según el área (p. ej. “pedido”) y plantea un posible bounded context.
 
 
-Con estas premisas en mente estamos listos para seguir desglosando puertos, adaptadores y patrones que sostienen un servicio robusto y mantenible.
+Con estas premisas en mente, entramos en **cómo decidir límites de dominio** y cómo esos límites se reflejan en puertos, adaptadores y contratos.

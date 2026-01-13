@@ -1,6 +1,31 @@
-# Tema 5 - CQRS Avanzado
+# Módulo 4/13 — CQRS avanzado: Event Store, versionado, Outbox y Sagas
 
 En esta segunda parte profundizaremos en los aspectos avanzados de Event Sourcing, comprendiendo por qué un modelo append-only es clave para auditoría y reconstrucción, cómo optimizar búsquedas en el event store, y qué estrategias seguir para versionar eventos sin perder compatibilidad.
+
+---
+
+## 0. Traducción de modelos entre bounded contexts
+
+Cuando un servicio consume datos/eventos de otro, rara vez puede “importar el modelo” sin pagar acoplamiento. Esto se suele resolver con **traducción de modelos**.
+
+### 0.1 Traducción sin estado (stateless translation)
+
+El adaptador traduce **payload → comando interno** sin recordar nada.
+
+- Entrada: evento externo `OrderCompletedV2`.
+- Salida: comando interno `RegisterPaymentCommand`.
+- Se implementa como *mapper/anti-corruption layer* (ACL) en infraestructura o aplicación.
+
+Ventaja: simple y fácil de escalar. Riesgo: si el flujo requiere correlación temporal, se queda corto.
+
+### 0.2 Traducción con estado (stateful translation)
+
+Cuando necesitas correlación y pasos (p. ej. “esperar 2 eventos para confirmar”), introduces estado:
+
+- **Saga / Process Manager**: mantiene progreso, timeouts y reintentos.
+- Persiste estado en una tabla (p. ej. `payment_saga_state`) para recuperación tras fallos.
+
+Ventaja: coordina procesos largos. Riesgo: aumenta complejidad; exige idempotencia y observabilidad.
 
 ## 1. Por Qué Append-Only: Caso del Mundo Real
 
@@ -313,3 +338,20 @@ class SagaTimeoutHandler {
 ```
 
 Este componente detecta sagas que superaron su plazo y aplica compensaciones.
+
+---
+
+## 7. Resiliencia en flujos distribuidos
+
+Cuando introduces eventos, sagas y outbox, también introduces fallos inevitables. Checklist mínimo:
+
+- **Circuit breaker + fallback** en llamadas síncronas (p. ej. a un proveedor de pagos).
+- **Retries con backoff + jitter** solo si la operación es idempotente.
+- **Idempotencia** por `messageId`/`correlationId` en consumidores y publicadores.
+- **DLQ (poison queue)** para mensajes no procesables tras N reintentos.
+- **Timeouts** explícitos en cada paso de saga (no infinitos).
+
+Pruebas recomendadas:
+
+- *Resilience tests* (simular caídas de broker/DB, latencia, duplicados).
+- Diseño “anti‑frágil”: el sistema mejora con el feedback (métricas, alertas, DLQ observable, runbooks).

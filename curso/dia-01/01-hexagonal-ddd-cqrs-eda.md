@@ -1,4 +1,4 @@
-# Sesión 1 · Conceptos — Introducción a DDD, Arquitectura Hexagonal, CQRS y EDA
+# Sesión 1 · Conceptos — Introducción a Microservicios, DDD, Arquitectura Hexagonal, CQRS y EDA
 
 ## 1. El desafío de la complejidad en sistemas modernos
 
@@ -43,11 +43,124 @@ Mientras el monolito concentra responsabilidades y dependencias en un mismo espa
 
 ---
 
-## 2. Un enfoque arquitectónico estratégico
+## 2. Arquitectura de microservicios: fundamentos
+
+### 2.1 ¿Qué es la arquitectura de microservicios?
+
+Una arquitectura de microservicios es un estilo en el que un sistema se compone de **servicios pequeños y autónomos**, construidos alrededor de **capacidades de negocio**. En vez de desplegar “una aplicación”, despliegas **múltiples unidades** que:
+
+- Se desarrollan y despliegan de forma **independiente**.
+- Exponen **contratos explícitos** (APIs y/o eventos).
+- Poseen (idealmente) **propiedad de datos** dentro de su contexto.
+- Colaboran para completar flujos de negocio end‑to‑end.
+
+No es “hacer endpoints en repos distintos”: es diseñar **límites**, **contratos** y **responsabilidades** para que el sistema evolucione sin colapsar por acoplamiento.
+
+### 2.2 Principios y características
+
+- **Autonomía y ownership**: un servicio debe tener un propósito claro y un equipo responsable.
+- **Límites alineados al negocio**: servicios definidos por capacidades (no por capas técnicas).
+- **Contratos estables**: APIs y eventos versionados, documentados y testeables.
+- **Descentralización de datos**: cada servicio decide su modelo de datos; integración por contratos.
+- **Automatización**: CI/CD, observabilidad y despliegue reproducible no son opcionales.
+- **Diseño para fallos**: la red falla, hay latencia, y los servicios pueden estar caídos.
+
+### 2.3 Ventajas y desafíos
+
+**Ventajas típicas**
+
+- Escalado independiente por hot‑paths (p. ej. *checkout* vs *analytics*).
+- Aislamiento de fallos (con resiliencia real) y despliegue más frecuente.
+- Equipos paralelizables y ciclos de entrega más cortos.
+
+**Desafíos reales**
+
+- Complejidad distribuida: latencia, *timeouts*, reintentos, idempotencia.
+- Consistencia de datos: transacciones distribuidas no “desaparecen” (cambian de forma).
+- Observabilidad: sin trazas/logs/métricas, depurar es impracticable.
+- Testing: integración y contratos (consumer‑driven) se vuelven críticos.
+
+### 2.4 Comparación con monolito y SOA (resumen operativo)
+
+| Enfoque | Cuándo encaja | Riesgo típico |
+|--------|----------------|---------------|
+| **Monolito modular** | Producto pequeño/mediano, 1 equipo, alta necesidad de consistencia | Se degrada a “big ball of mud” si no hay disciplina modular |
+| **Microservicios** | Múltiples equipos, necesidades de escalado/aislamiento, dominios diferenciables | “Distribuir el monolito” y multiplicar la complejidad |
+| **SOA clásica** | Integración corporativa heterogénea, ESB y gobierno central | Acoplamiento por middleware y despliegues coordinados |
+
+### 2.5 Casos de uso (y anti‑casos)
+
+Encaja cuando:
+
+- Hay **dominios separables** y *ownership* claro.
+- Existen necesidades de **escalado diferencial** (no todo el sistema escala igual).
+- La organización requiere **autonomía de equipos** y despliegues frecuentes.
+
+No suele encajar cuando:
+
+- El dominio aún es difuso (producto en exploración) y el coste de coordinación supera el beneficio.
+- No hay capacidad para operar observabilidad, CI/CD, *on-call* y disciplina de contratos.
+
+### 2.6 Definición de límites de dominio y contexto del negocio
+
+Para evitar microservicios “por endpoints”, usamos heurísticas de diseño por dominio:
+
+- **Lenguaje ubicuo**: términos que el negocio usa de forma consistente.
+- **Bounded Context**: un límite donde un modelo tiene significado estable.
+- **Ownership**: quién cambia qué, con qué cadencia y con qué dependencias.
+
+Regla práctica: si dos funcionalidades **siempre** cambian juntas y comparten invariantes, probablemente pertenecen al mismo contexto; si cambian con ritmos distintos, conviene separar.
+
+### 2.7 Diseño de interfaces de comunicación
+
+Dos ejes deciden el contrato:
+
+- **Síncrono (HTTP/gRPC)**: útil para consultas, composición simple, latencias bajas y UX inmediata. Requiere *timeouts*, *circuit breakers* y gestión de disponibilidad.
+- **Asíncrono (eventos/mensajes)**: útil para desacoplar, absorber picos y reaccionar a cambios. Requiere idempotencia, *retry*, *DLQ* y versionado de eventos.
+
+Un criterio común: **comandos** que necesitan respuesta inmediata → síncronos; **hechos del dominio** (algo ocurrió) → eventos.
+
+### 2.8 Técnicas de descomposición y partición de servicios
+
+- **Por capacidad de negocio** (*business capability*): “Pedidos”, “Inventario”, “Pagos”.
+- **Por subdominio** (Core/Soporte/Genérico): prioriza inversión donde hay ventaja competitiva.
+- **Strangler Fig**: migración gradual desde monolito (estrangular por rutas).
+- **Event Storming / workshops**: descubrir flujos, comandos, eventos y puntos de corte.
+
+Evitar: descomposición por “capas” (users‑service, db‑service) o por entidades CRUD (customer‑service) sin invariantes claras.
+
+### 2.9 Estrategias base de escalabilidad y disponibilidad
+
+- **Escalado horizontal** (réplicas) vs **vertical** (más recursos): casi siempre primero horizontal.
+- **Caché** (read‑through, write‑through) y **CDN** para contenido estático.
+- **CQRS** para separar lectura/escritura y escalar lecturas.
+- **Replicación** y *read replicas* donde el patrón de lectura lo justifica.
+- **Procesamiento asíncrono** para picos (colas, workers).
+- **Balanceo** y *rate limiting* para estabilidad.
+
+Estas estrategias condicionan el diseño desde el principio: modelado de endpoints, eventos, consistencia e idempotencia.
+
+### 2.10 Migración a microservicios (visión general)
+
+Migrar no es “partir el monolito”: es **reducir riesgo** mientras extraes capacidades.
+
+- **Evaluación inicial**: identifica módulos con alta fricción (cambian mucho, fallan mucho, escalan mal).
+- **Servicios candidatos**: prioriza contextos con límites claros y bajo acoplamiento (inventario suele ser buen candidato).
+- **Estrategia gradual (Strangler Fig)**:
+  - extrae rutas/funcionalidades por *slice*.
+  - mantén compatibilidad de contratos mientras conviven viejo/nuevo.
+- **Gestión de datos**:
+  - evita “shared database” permanente; úsala como puente temporal si no hay alternativa.
+  - introduce eventos de integración para sincronizar estados cuando separe DBs.
+- **Retos**: consistencia, observabilidad, testing de contratos, operación (on‑call), cultura de ownership.
+
+---
+
+## 3. Un enfoque arquitectónico estratégico
 
 A lo largo del curso profundizaremos en cuatro pilares complementarios. A continuación se presenta una síntesis conceptual y sus compromisos.
 
-### 2.1 Arquitectura Hexagonal (Ports & Adapters)
+### 3.1 Arquitectura Hexagonal (Ports & Adapters)
 
 El propósito fundamental es **proteger el núcleo de dominio** de detalles tecnológicos que inevitablemente cambian.
 
@@ -120,7 +233,7 @@ export class PostgresOrderRepository implements OrderRepositoryPort {
 
 ---
 
-### 2.2 Domain-Driven Design (DDD)
+### 3.2 Domain-Driven Design (DDD)
 
 DDD parte de una premisa sencilla: **el software se mantiene alineado con la realidad del negocio cuando modela el lenguaje y las reglas que los expertos usan a diario**. Aplicarlo exige dos niveles:
 
@@ -349,7 +462,7 @@ Modelar el/los dominio(s) de https://www.eachlabs.ai/ - basado en su descripció
 
 ---
 
-### 2.3 CQRS (Command Query Responsibility Segregation)
+### 3.3 CQRS (Command Query Responsibility Segregation)
 
 **Idea principal**: separar la modificación de estado (Commands) de la consultación de datos (Queries), permitiendo que cada lado evolucione, escale y se optimice de manera independiente.
 
@@ -420,7 +533,7 @@ export class GetOrderHandler {
 
 ---
 
-### 2.4 Event-Driven Architecture (EDA)
+### 3.4 Event-Driven Architecture (EDA)
 
 **Idea principal**: articular el sistema en torno a la emisión y consumo de eventos de dominio a través de un broker asíncrono (RabbitMQ, Kafka, AWS SNS/SQS…), consiguiendo desacoplamiento, flexibilidad y resiliencia.
 
@@ -499,7 +612,7 @@ Eventos como RPC encubierto: esperar respuesta sincrónica (pub/sub sincrónico)
 
 ---
 
-## 3. ¿Por qué funciona bien en Node.js?
+## 4. ¿Por qué funciona bien en Node.js?
 
 | Característica de Node                            | Beneficio para el enfoque del curso                                      |
 | ------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -524,7 +637,7 @@ new NodeSDK({
 
 ---
 
-## 4. Beneficios clave
+## 5. Beneficios clave
 
 - **Mantenibilidad:** cambio localizado sin efectos cascada.
 - **Escalabilidad:** lectura y escritura crecen de forma independiente.

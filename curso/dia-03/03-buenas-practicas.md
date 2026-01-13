@@ -1,4 +1,4 @@
-# 03-buenas-practicas · Hexagonal Avanzado y DIP
+# Sesión 3 · Buenas prácticas — DI, DIP y scope (Hexagonal)
 
 **Objetivo:** incorporar patrones de inyección de dependencias sólidos, reducir código boilerplate y facilitar pruebas predecibles sin comprometer la claridad del diseño.
 

@@ -1,5 +1,6 @@
 // src/main.ts
 import Fastify from "fastify";
+import "dotenv/config";
 
 export async function buildServer() {
   const app = Fastify({ logger: true });

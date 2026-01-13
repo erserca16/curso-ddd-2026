@@ -1,19 +1,43 @@
-# Avance Proyecto Final – Sprint #4
+# Avance del proyecto · Sesión 7 — Sprint (Outbox + procesos distribuidos)
 
-## Objetivo hasta la sesión 8
+**Objetivo hasta la sesión 8 (EDA)**
 
-- Terminar Saga de pago → orden completada.  
-- Outbox consolidado en los 4 servicios principales.  
-- Métrica `saga_failed_total` en Prometheus.
+- Completar un flujo distribuido entre `order-service` e `inventory-service` usando eventos.
+- Publicación fiable de eventos con Outbox (sin “fantasías” de exactly-once).
+- Observabilidad mínima del flujo: métricas y un dashboard básico en Grafana.
 
-### Tareas clave
+---
 
-| # | Servicio | Issue GH | Done? |
-|---|----------|----------|-------|
-| 1 | payment | Process Manager publish `PaymentConfirmed` | |
-| 2 | inventory | Consume `ReserveStockCmd`, emite `StockReserved` | |
-| 3 | order | Escucha `StockReserved`, actualiza estado | |
-| 4 | obs | Dashboard “Saga Flow” con panels de métricas | |
+## Alcance del sprint (flujo objetivo)
 
-> Deadline: 15-may 23 h COL.  
-> **Demo live de la saga** abre la sesión 8 (EDA).
+Coreografía recomendada:
+
+1. `order-service` crea una orden (`PENDING`) y publica `OrderCreated` (v1).
+2. `inventory-service` consume `OrderCreated`, intenta reservar stock y publica:
+   - `ProductInventoryReserved` (v1), o
+   - `ProductInventoryReservationFailed` (v1).
+3. `order-service` consume el resultado y transiciona la orden:
+   - `CONFIRMED` si hay reserva, o
+   - `CANCELLED` si falla (compensación).
+
+> Alternativa (orquestada): implementar el Process Manager en `order-api` y mantener el estado del proceso allí.
+
+---
+
+## Tareas clave
+
+| # | Componente | Entregable | Done? |
+|---|------------|------------|-------|
+| 1 | order-service | Outbox table + publisher (polling) para `OrderCreated` | |
+| 2 | inventory-service | Consumer `OrderCreated` + publicación de resultado | |
+| 3 | order-service | Consumer de inventario + transición de estado + proyección `order_status` | |
+| 4 | Observabilidad | Métricas del flujo (`outbox_*`, `process_*`) + panel básico | |
+
+### Checklist de calidad
+
+- Idempotencia por `messageId`/`correlationId` en consumidores.
+- Retries con backoff y DLQ para fallos permanentes.
+- Contratos versionados (mínimo: `type`, `version`, `timestamp`, `payload`).
+
+> Deadline: Miércoles 18-feb-2026 23:59.  
+> **Demo live del flujo** abre la sesión 8 (EDA).

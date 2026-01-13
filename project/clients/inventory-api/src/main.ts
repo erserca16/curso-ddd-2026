@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import "dotenv/config";
 import { bootstrapContainer, disposeContainer } from "./application/container";
 import { registerRoutes } from "./infrastructure/http/routes";
 import { startTelemetry, stopTelemetry } from "./otel";

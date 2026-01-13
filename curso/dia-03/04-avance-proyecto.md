@@ -1,133 +1,131 @@
-# Avance Proyecto Final – Sprint #1 (30 min en sesión + trabajo en casa)
+# Avance del proyecto · Sesión 3 — Order Service (sprint)
 
-## Objetivo de hoy
+**En sesión (30 min) + trabajo en casa**
 
-- Completar la infraestructura de `invenory-service`.
-- Levantar el servicio, probarlo y dejarlo corriendo.
-- Avanzar en la implementación de `order-service`, siguiendo como ejemplo el código de `inventory-service`.
-- Levantar el servicio, probarlo y dejarlo corriendo.
-- Intentar avanzar en la implementación de los clientes.
+## Objetivo
+
+- Consolidar límites entre **Pedidos** e **Inventario** (evitar llamadas directas desde dominio).
+- Avanzar el `inventory-service` (estructura, puertos y adapter Postgres) hasta poder levantarlo y probarlo.
+- Iniciar el `order-service` con un modelo mínimo y un API HTTP fino.
 
 ---
 
-# Order Services
+## 1. Límite y responsabilidades del Order Service
 
-# 05-avance-proyecto · Order Service – Sesión 3
+El Order Service se encarga exclusivamente de **gestionar órdenes** (crear/consultar).
 
-En este servicio de dominio de pedidos, el Order Service se encarga exclusivamente de gestionar la creación y consulta de órdenes. No realiza llamadas directas al inventory-service; la orquestación (reservar stock y luego crear la orden) corresponde a la API cliente o API Gateway. De este modo, el Order Service permanece puro y centrado en su modelo de dominio.
+- No realiza llamadas directas a `inventory-service` desde el dominio.
+- La orquestación “reservar stock → crear pedido” corresponde a un **cliente** (API Gateway/BFF) o a una **saga** (lo veremos en sesiones posteriores).
 
-Objetivo de la práctica (1 hora):
+Esto mantiene el servicio **puro y centrado en su modelo de dominio**, reduciendo acoplamiento entre bounded contexts.
 
-- Reforzar la arquitectura hexagonal definiendo datos, peticiones y respuestas
-- Enfocar el servicio sólo en su responsabilidad core: procesar órdenes
+---
 
-Descripción de datos y peticiones:
+## 2. Contrato HTTP mínimo (Order Service)
 
-Modelo Order:
+### Modelo de datos (DTO/contrato)
 
-- orderId: string (UUID generado en backend)
-- status: string enum \["PENDING", "CONFIRMED", "CANCELLED"]
-- createdAt: ISO-8601 timestamp
-- items: OrderItem\[]
+**Order**
 
-Modelo OrderItem:
+- `orderId`: string (UUID generado en backend)
+- `status`: `"PENDING" | "CONFIRMED" | "CANCELLED"`
+- `createdAt`: timestamp ISO‑8601
+- `items`: `OrderItem[]`
 
-- sku: string (ej. "SKU-12345")
-- quantity: number (entero positivo)
+**OrderItem**
 
-**POST /orders**
+- `sku`: string (ej. `"SKU-12345"`)
+- `quantity`: number (entero positivo)
 
-- Body JSON:
+### POST `/orders`
 
-  ```json
-  {
-    "items": [
-      { "sku": "ABC-001", "quantity": 2 },
-      { "sku": "XYZ-123", "quantity": 1 }
-    ]
-  }
-  ```
+**Body**
 
-- Validaciones:
-  • items debe existir y no estar vacío
-  • sku no puede estar vacío y debe coincidir con /^\[A-Z0-9-]+\$/
-  • quantity > 0
+```json
+{
+  "items": [
+    { "sku": "ABC-001", "quantity": 2 },
+    { "sku": "XYZ-123", "quantity": 1 }
+  ]
+}
+```
 
-- Flujo interno del Order Service:
+**Validaciones**
 
-  1. Parsear y validar payload
-  2. Crear entidad Order con status="PENDING", asignar orderId y createdAt
-  3. Persistir Order en base de datos
-  4. Responder 201 Created con { orderId, status, createdAt }
+- `items` existe y no está vacío.
+- `sku` no está vacío y cumple `^[A-Z0-9-]+$`.
+- `quantity > 0`.
 
-- Flujo externo (API cliente, fuera de este servicio):
+**Flujo interno**
 
-  1. Llamar a inventory-service POST /inventory/reserve por cada ítem
-  2. Si todas las reservas OK, invocar POST /orders al Order Service
-  3. Si alguna reserva falla, abortar y devolver 409 Conflict al cliente
+1. Parsear y validar payload.
+2. Crear entidad `Order` con `status="PENDING"` y `createdAt`.
+3. Persistir `Order` en base de datos.
+4. Responder `201 Created` con `{ orderId, status, createdAt }`.
 
-- Respuesta 201 Created:
+**Flujo externo (fuera del Order Service)**
 
-  - Header Location: /orders/{orderId}
-  - Body:
-    ```json
-    {
-      "orderId": "550e8400-e29b-41d4-a716-446655440000",
-      "status": "PENDING",
-      "createdAt": "2025-05-07T10:15:30.000Z"
-    }
-    ```
+1. Cliente llama a `inventory-service` `POST /inventory/:sku/reserve` por cada ítem.
+2. Si todas las reservas OK, invoca `POST /orders`.
+3. Si una reserva falla, aborta y devuelve `409 Conflict` al cliente.
 
-  ```
+**Respuesta 201**
 
-  ```
+- Header `Location: /orders/{orderId}`
+- Body:
 
-**GET /orders/\:orderId**
+```json
+{
+  "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "PENDING",
+  "createdAt": "2026-02-03T16:15:30.000Z"
+}
+```
 
-- Parámetro de ruta: orderId (UUID)
+### GET `/orders/:orderId`
 
-- Flujo interno:
+**Flujo interno**
 
-  1. Validar formato de orderId
-  2. Recuperar Order desde repositorio
-  3. Si no existe, responder 404 Not Found
-  4. Mapear Order a DTO y devolver 200 OK
+1. Validar formato de `orderId`.
+2. Recuperar `Order` desde repositorio.
+3. Si no existe, responder `404 Not Found`.
+4. Mapear a DTO y devolver `200 OK`.
 
-- DTO 200 OK:
+**DTO 200**
 
-  ```json
-  {
-    "orderId": "550e8400-e29b-41d4-a716-446655440000",
-    "status": "PENDING",
-    "createdAt": "2025-05-07T10:15:30.000Z",
-    "items": [
-      { "sku": "ABC-001", "quantity": 2 },
-      { "sku": "XYZ-123", "quantity": 1 }
-    ]
-  }
-  ```
+```json
+{
+  "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "PENDING",
+  "createdAt": "2026-02-03T16:15:30.000Z",
+  "items": [
+    { "sku": "ABC-001", "quantity": 2 },
+    { "sku": "XYZ-123", "quantity": 1 }
+  ]
+}
+```
 
-**Errores comunes**
+### Errores comunes
 
-| HTTP | Código interno  | Mensaje                     |
-| ---- | --------------- | --------------------------- |
-| 400  | INVALID_PAYLOAD | Datos de petición inválidos |
-| 404  | ORDER_NOT_FOUND | Pedido no encontrado        |
-| 500  | INTERNAL_ERROR  | Error interno del servidor  |
+| HTTP | Código interno | Mensaje |
+|------|----------------|---------|
+| 400 | `INVALID_PAYLOAD` | Datos de petición inválidos |
+| 404 | `ORDER_NOT_FOUND` | Pedido no encontrado |
+| 500 | `INTERNAL_ERROR` | Error interno del servidor |
 
-**Notas de arquitectura hexagonal**
+---
 
-- Puertos de persistencia (domain/ports):
-  • OrderRepositoryPort { save(order), findById(orderId) }
-- Use-cases (application/use-cases):
-  • CreateOrderUseCase (valida y persiste)
-  • GetOrderUseCase (recupera y mapea)
-- Adaptadores:
-  • PrismaOrderRepository (implements OrderRepositoryPort)
-  • HttpInbound (routes y controllers que exponen los endpoints)
-- DI y arranque (main.ts):
-  • PrismaClient singleton
-  • Repositorio scoped
-  • Inyección en use-cases con contenedor DI
+## 3. Checklist de arquitectura hexagonal (Order Service)
 
-Con esta definición, los alumnos podrán crear primero los DTOs y validaciones, luego el repository con Prisma, y finalmente los controladores HTTP, manteniendo el Order Service puro y desacoplado de otros servicios.
+- **Puertos** (`domain/ports`):
+  - `OrderRepositoryPort` `{ save(order), findById(orderId) }`
+- **Use Cases** (`application/use-cases`):
+  - `CreateOrderUseCase` (valida y persiste)
+  - `GetOrderUseCase` (recupera y mapea)
+- **Adaptadores** (`infrastructure`):
+  - `PrismaOrderRepository` (implementa el puerto)
+  - `http` (routes/handlers que exponen endpoints)
+- **DI y arranque** (`main.ts`):
+  - `PrismaClient` singleton
+  - repositorio scoped
+  - inyección en Use Cases por contenedor DI

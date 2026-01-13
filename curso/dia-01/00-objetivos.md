@@ -1,6 +1,6 @@
-# Sesión 1 · 05-may-2025  
-**Duración:** 17 h 00 – 19 h 00 (UTC-5 / Colombia)  
-**Tema global:** *Conceptos base – DDD, Arquitectura Hexagonal, CQRS y EDA*
+# Sesión 1 · Martes 27-ene-2026  
+**Duración:** 16:00 – 19:00  
+**Tema global:** *Introducción a la Arquitectura de Microservicios (y cómo encaja DDD/Hexagonal/CQRS/EDA)*
 
 ---
 
@@ -8,36 +8,36 @@
 
 | # | Objetivo específico | Relevancia |
 |---|---------------------|------------|
-| 1 | Analizar por qué la complejidad creciente degrada la productividad del equipo. | Reconocer el problema es el primer paso para aplicar patrones de diseño con sentido. |
-| 2 | Diferenciar con precisión **Dominio** y **Infraestructura** dentro de una solución Node.js. | Una separación nítida minimiza la deuda técnica y mejora la mantenibilidad. |
-| 3 | Describir con argumentos qué resuelve cada enfoque (Hexagonal, DDD, CQRS, EDA) y cuáles son sus límites. | Aplicar la solución adecuada según el contexto evita sobre-ingeniería. |
-| 4 | Identificar cuándo la adopción de un patrón añade más coste que valor. | Contribuye a decisiones arquitectónicas equilibradas y sostenibles. |
-| 5 | Clonar el repositorio y ejecutar la pila básica (`docker-compose`) en local. | Se garantiza que todos los participantes parten de un entorno reproducible. |
+| 1 | Definir qué es la **arquitectura de microservicios** y sus principios principales. | Establece un lenguaje común para todo el curso y evita “microservicios” como etiqueta vacía. |
+| 2 | Comparar microservicios frente a monolito y SOA, identificando ventajas, riesgos y cuándo no aplicarlos. | Permite decisiones arquitectónicas equilibradas (evita sobre-ingeniería). |
+| 3 | Delimitar **límites de dominio** (bounded contexts) y proponer una primera descomposición de servicios. | Sin límites claros, la comunicación y el ownership se degradan desde el día 1. |
+| 4 | Identificar estrategias base de escalabilidad/disponibilidad (sync/async, caché, resiliencia) que condicionan el diseño. | Conecta diseño de servicios con performance y tolerancia a fallos. |
+| 5 | Clonar el repositorio y ejecutar la pila base del proyecto (`docker compose`) en local. | Asegura un entorno reproducible para las sesiones prácticas. |
 
 ---
 
-## Agenda de la sesión
+## Agenda (3h)
 
-| Bloque | Contenido |
-|--------|-----------|
-| Bienvenida & Verificación de entorno | Clonado del repositorio y arranque de contenedores. |
-| El problema de la complejidad | Análisis del diagrama “Big Ball of Mud” y sus consecuencias. |
-| Panorama general de los patrones | Introducción conceptual a Hexagonal, DDD, CQRS y EDA. |
-| Estado del arte de los microservicios en Node.js (2025) | Tendencias, librerías y buenas prácticas actuales. |
-| Lanzar el proyecto | Ejecución de `docker-compose`, verificación de *health-checks* y exploración de endpoints. |
-| Evaluación rápida | Quiz de preguntas de selección múltiple para afianzar conceptos. |
+| Hora | Bloque | Contenido |
+|------|--------|-----------|
+| 16:00–16:15 | Bienvenida & verificación de entorno | Clonado del repo y arranque de contenedores. |
+| 16:15–16:55 | Microservicios 101 | Definición, principios, ventajas/desafíos y comparativa (monolito/SOA). |
+| 16:55–17:10 | Descanso | Pausa breve. |
+| 17:10–17:50 | Diseño por dominios | Límites de dominio, contexto de negocio y descomposición inicial. |
+| 17:50–18:20 | Comunicación y escalabilidad (visión general) | Sync vs async, trade-offs y primeras estrategias de escalado/disponibilidad. |
+| 18:20–18:50 | Lanzar el proyecto | `docker compose`, verificación de *health-checks* y exploración de endpoints. |
+| 18:50–19:00 | Evaluación rápida | Quiz para afianzar los conceptos base. |
 
 ---
 
 ## Conceptos evaluados
 
-- Definiciones de *Dominio* y *Modelo de Dominio*  
-- Importancia del *Lenguaje Ubicuo*  
-- Diferencias entre **Port** y **Adapter**  
-- Naturaleza de *Command* y *Query* en CQRS  
-- Contraste entre *Event Bus in-memory* y *Broker duradero*  
-- Ventajas y compromisos de EDA frente a REST síncrono  
-- Aplicación del *Single Responsibility Principle* en servicios
+- ¿Qué es la arquitectura de microservicios? Principios y características.
+- Ventajas/desafíos y comparativa con monolito/SOA.
+- Límites de dominio: contexto, ownership y primeras heurísticas de descomposición.
+- Interfaces y contratos: qué decide un API y qué decide un evento.
+- Panorama de escalabilidad/disponibilidad: caché, balanceo, asincronía y resiliencia.
+- Arranque del entorno del proyecto (Docker Compose) y verificación de servicios.
 
 *(La respuesta a cada punto deberá poder expresarse en menos de 30 segundos.)*
 
@@ -81,4 +81,3 @@ En esta primera sesión se valida el entorno de desarrollo y se ejecuta la base 
 2. **“Patterns of Enterprise Application Architecture”** – Martin Fowler  
 3. **“Learning Event-Driven Architecture”** – Hugh McKee  
 4. **“Clean Architecture”** – Robert C. Martin (referencia comparativa)
-

@@ -1,4 +1,6 @@
-# Sesión 9 · 19-may-2025  
+# Sesión 9 · Martes 24-feb-2026  
+**Duración:** 16:00 – 19:00
+**Tema global:** *Monitorización, troubleshooting y resiliencia en EDA (RabbitMQ + OTEL)*
 ## Objetivos y agenda
 
 - Continuar la exploración de EDA, centrándonos en la implementación práctica de la robustez y la observabilidad.
@@ -6,3 +8,17 @@
 - Gestionar la evolución de los esquemas de eventos sin romper los consumidores.
 - Introducir la trazabilidad y observabilidad en sistemas orientados a eventos utilizando OpenTelemetry.
 - Proporcionar experiencia práctica a través de ejercicios de codificación en TypeScript con RabbitMQ.
+
+---
+
+## Agenda (3h)
+
+| Hora | Bloque | Contenido |
+|------|--------|-----------|
+| 16:00–16:10 | Repaso | Revisión de la sesión anterior y objetivos del día. |
+| 16:10–16:40 | Retries con criterio | Backoff/jitter, idempotencia y deduplicación. |
+| 16:40–17:10 | DLQ y recuperación | Flujos de redelivery, poison messages y replay. |
+| 17:10–17:20 | Descanso | Pausa breve. |
+| 17:20–17:50 | Troubleshooting | Diagnóstico: lag, timeouts, saturación y errores. |
+| 17:50–18:30 | Observabilidad en mensajería | Métricas, logs correlados y trazabilidad. |
+| 18:30–19:00 | Taller | Simular fallos y verificar métricas/logs. |
