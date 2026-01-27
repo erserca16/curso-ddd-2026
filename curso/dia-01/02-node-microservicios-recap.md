@@ -10,7 +10,7 @@
 | -------------- | --------------------------------------------- | ---------------------------------------------------- |
 | HTTP API       | **Fastify 4**                                 | 30‑40 % +rápido que Express, plugin ecosystem maduro |
 | Broker         | **RabbitMQ 3.13**                             | Durable, buen soporte plugins, UI comprensible       |
-| DB             | **PostgreSQL 16** + Prisma                    | TX ACID, rich JSON ops, migraciones declarativas     |
+| DB             | **PostgreSQL 17** + Prisma                    | TX ACID, rich JSON ops, migraciones declarativas     |
 | Observabilidad | **OpenTelemetry 1.29** + Prometheus + Grafana | Estándar de facto                                    |
 | Testing        | **Vitest**                                    | ESM native, peso pluma, mocking builtin              |
 | Lint/Fmt       | **ESLint** + **Biome**                        | Biome reemplaza Prettier y acelera CI                |

@@ -1,8 +1,12 @@
 # Sesión 1 · Martes 27-ene-2026  
 **Duración:** 16:00 – 19:00  
-**Tema global:** *Introducción a la Arquitectura de Microservicios (y cómo encaja DDD/Hexagonal/CQRS/EDA)*
+**Tema global:** *Introdu- cción a la Arquitectura de Microservicios (y cómo encaja DDD/Hexagonal/CQRS/EDA)*
 
-**Temario (referencia):** [1 · Introducción a la arquitectura de microservicios](../../NUEVO_TEMARIO.md#1-introducción-a-la-arquitectura-de-microservicios) · [2 · Implementación de microservicios](../../NUEVO_TEMARIO.md#2-implementación-de-microservicios) · [3 · Comunicación y descubrimiento de servicios](../../NUEVO_TEMARIO.md#3-comunicación-y-descubrimiento-de-servicios) · [8 · Migración a microservicios](../../NUEVO_TEMARIO.md#8-migración-a-microservicios)
+**Temario (referencia):**
+- [1 · Introducción a la arquitectura de microservicios](../../NUEVO_TEMARIO.md#1-introducción-a-la-arquitectura-de-microservicios)
+- [2 · Implementación de microservicios](../../NUEVO_TEMARIO.md#2-implementación-de-microservicios)
+- [3 · Comunicación y descubrimiento de servicios](../../NUEVO_TEMARIO.md#3-comunicación-y-descubrimiento-de-servicios)
+- [8 · Migración a microservicios](../../NUEVO_TEMARIO.md#8-migración-a-microservicios)
 
 ---
 
@@ -15,20 +19,6 @@
 | 3 | Delimitar **límites de dominio** (bounded contexts) y proponer una primera descomposición de servicios. | Sin límites claros, la comunicación y el ownership se degradan desde el día 1. |
 | 4 | Identificar estrategias base de escalabilidad/disponibilidad (sync/async, caché, resiliencia) que condicionan el diseño. | Conecta diseño de servicios con performance y tolerancia a fallos. |
 | 5 | Clonar el repositorio y ejecutar la pila base del proyecto (`docker compose`) en local. | Asegura un entorno reproducible para las sesiones prácticas. |
-
----
-
-## Agenda (3h)
-
-| Hora | Bloque | Contenido |
-|------|--------|-----------|
-| 16:00–16:15 | Bienvenida & verificación de entorno | Clonado del repo y arranque de contenedores. |
-| 16:15–16:55 | Microservicios 101 | Definición, principios, ventajas/desafíos y comparativa (monolito/SOA). |
-| 16:55–17:10 | Descanso | Pausa breve. |
-| 17:10–17:50 | Diseño por dominios | Límites de dominio, contexto de negocio y descomposición inicial. |
-| 17:50–18:20 | Comunicación y escalabilidad (visión general) | Sync vs async, trade-offs y primeras estrategias de escalado/disponibilidad. |
-| 18:20–18:50 | Lanzar el proyecto | `docker compose`, verificación de *health-checks* y exploración de endpoints. |
-| 18:50–19:00 | Evaluación rápida | Quiz para afianzar los conceptos base. |
 
 ---
 
