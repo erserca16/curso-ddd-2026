@@ -6,6 +6,7 @@ Objetivo: profundizar en la clasificación de puertos y adaptadores, su organiza
 
 - Un **Puerto** es una interfaz dentro de la capa de aplicación que define un contrato: _qué_ hace el sistema, sin detallar _cómo_.
 - Un **Adaptador** es la implementación concreta de ese contrato, en la capa de infraestructura: _cómo_ interactúa con una base de datos, un broker de mensajes o un framework HTTP.
+- En este documento, “**ejercicios**” se refiere al mini‑proyecto local del taller (guía: `curso/dia-02/04-ejercicios.md`).
 
 ---
 
@@ -51,7 +52,7 @@ En la práctica:
 
 ### 1.3 Creando un puerto de entrada y salida en un proyecto Node bajo un modelo de arquitectura hexagonal
 
-Ejemplo mínimo (entrada + salida), para el mini‑dominio en `curso/dia-02/ejercicios`:
+Ejemplo mínimo (entrada + salida), para el mini‑dominio del taller (ver `curso/dia-02/04-ejercicios.md`):
 
 ```ts
 // application/ports/ReserveCopiesPort.ts (puerto de entrada, opcional)
@@ -104,13 +105,13 @@ flowchart LR
 
 En ejercicios (con el mismo stack del repo), los puertos están en TypeScript:
 
-- `curso/dia-02/ejercicios/src/application/ports/BookStockRepositoryPort.ts`
-- `curso/dia-02/ejercicios/src/application/ports/EventPublisherPort.ts`
+- `src/application/ports/BookStockRepositoryPort.ts`
+- `src/application/ports/EventPublisherPort.ts`
 
 ### 3.2. Adaptadores in-memory (implementación de puertos)
 
-- Repo (persistencia): `curso/dia-02/ejercicios/src/infrastructure/persistence/InMemoryBookStockRepository.ts`
-- Publisher (eventos): `curso/dia-02/ejercicios/src/infrastructure/events/InMemoryEventPublisher.ts`
+- Repo (persistencia): `src/infrastructure/persistence/InMemoryBookStockRepository.ts`
+- Publisher (eventos): `src/infrastructure/events/InMemoryEventPublisher.ts`
 
 Micro-reto (5 min): abre `ReserveCopiesUseCase` y decide qué es “contrato estable” del evento `CopiesReserved`:
 
@@ -121,7 +122,7 @@ Micro-reto (5 min): abre `ReserveCopiesUseCase` y decide qué es “contrato est
 ## 4. Adaptador de entrada: HTTP Handler
 
 ```typescript
-// curso/dia-02/ejercicios/src/main.ts (idea)
+// src/main.ts (idea)
 // - valida forma (JSON, campos requeridos)
 // - delega en el Use Case
 // - traduce error a HTTP
@@ -137,8 +138,16 @@ Checklist “thin HTTP adapter”:
 
 ## 5. Inversión de Dependencias (DIP) en main.ts
 
+**¿Qué es DIP?** El principio de inversión de dependencias dice que:
+
+- el **código de alto nivel** (casos de uso) no debe depender del **código de bajo nivel** (DB, HTTP, broker),
+- ambos deben depender de **abstracciones** (puertos),
+- y los detalles (adaptadores) son los que implementan esas abstracciones.
+
+En Hexagonal esto se ve muy claro: el core define `*Port` y el `main.ts` (bootstrap) “cablea” implementaciones concretas (in-memory, Postgres, RabbitMQ) sin que el dominio tenga que importar nada técnico.
+
 ```typescript
-// curso/dia-02/ejercicios/src/main.ts (idea)
+// src/main.ts (idea)
 export function buildContainer() {
   // wiring explícito, sin magia
   return { stockRepo, events, reserveCopiesUseCase };
@@ -164,8 +173,8 @@ export function buildContainer() {
 
 En ejercicios, los tests son con Vitest (igual que en `project/services/*`):
 
-- `curso/dia-02/ejercicios/test/domain.test.ts`
-- `curso/dia-02/ejercicios/test/reserve-usecase.test.ts`
+- `test/domain.test.ts`
+- `test/reserve-usecase.test.ts`
 
 Mini-reto (10 min): lee ese test y responde:
 
@@ -204,7 +213,7 @@ Regla práctica: si una dependencia mantiene estado mutable, evita que sea singl
 
 ## 10. Transfer al proyecto (al final de la sesión)
 
-Cuando el patrón esté claro en `curso/dia-02/ejercicios`, lo llevamos al proyecto:
+Cuando el patrón esté claro en el mini‑proyecto del taller, lo llevamos al proyecto:
 
 - `BookId` → `SKU`
 - `BookStock` → `ProductInventory`

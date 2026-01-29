@@ -2,7 +2,9 @@
 
 Antes de adentrarnos en Arquitectura Hexagonal, repasemos los conceptos clave que cubrimos en la **Sesión 1**, su importancia y un pequeño reto práctico para afianzar cada uno.
 
-> Hoy practicaremos primero con un mini‑dominio “similar” al proyecto (reservas de stock), pero **no** tocaremos `project/` hasta el final. Crearemos durante la sesión un mini‑workspace en `curso/dia-02/ejercicios` (TypeScript + Fastify + Vitest, igual que el stack del repo).
+> Hoy practicaremos primero con un mini‑dominio “similar” al proyecto (reservas de stock), pero **no** tocaremos `project/` hasta el final.
+>
+> Para practicar, montaremos un mini‑proyecto **local** de ejercicios (TypeScript + Fastify + Vitest, igual que el stack del repo). Si lo creas dentro del repo, usa la ruta sugerida `curso/dia-02/ejercicios/` (no está versionada). Guía: `curso/dia-02/04-ejercicios.md`.
 
 | Concepto | Descripción resumida | Micro-challenge |
 |----------|-----------------------|-----------------|
@@ -19,6 +21,6 @@ Antes de adentrarnos en Arquitectura Hexagonal, repasemos los conceptos clave qu
 
 ### Warm-up práctico (10 min)
 
-1. Crea la carpeta `curso/dia-02/ejercicios` siguiendo `curso/dia-02/04-avance-proyecto.md`.
+1. Crea la carpeta `curso/dia-02/ejercicios` siguiendo `curso/dia-02/04-ejercicios.md`.
 2. Implementa el primer Value Object (`BookId`) y ejecuta el primer test con Vitest.
 3. Marca (en el editor) qué es **dominio** vs **aplicación** vs **infra** mientras lo construís.

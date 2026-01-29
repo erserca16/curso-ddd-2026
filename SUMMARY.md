@@ -12,7 +12,7 @@
   * [01 · Objetivos](curso/dia-02/01-objetivos.md)
   * [02 · Arquitectura Hexagonal](curso/dia-02/02-arquitectura-hexagonal.md)
   * [03 · Puertos y Adaptadores](curso/dia-02/03-puertos-adaptadores.md)
-  * [04 · Avance Proyecto](curso/dia-02/04-avance-proyecto.md)
+  * [04 · Ejercicios](curso/dia-02/04-ejercicios.md)
 
 * **Sesión 03 – Límites de Dominio (Martes 03-feb-2026)**
   * [00 · Repaso](curso/dia-03/00-repaso.md)

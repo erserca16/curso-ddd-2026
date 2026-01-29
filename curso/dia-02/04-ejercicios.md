@@ -1,6 +1,27 @@
-# Taller práctico — Sesión 2 (crear ejercicios en `curso/` + transfer final a `project/`)
+# Ejercicios — Sesión 2 (taller práctico + transfer a `project/`)
 
 Objetivo: practicar Hexagonal + DDD táctico con ejemplos **conceptualmente cercanos** al proyecto (reservas de stock), pero construidos desde cero en clase para entender cada pieza. Al final, hacemos el “transfer” al `inventory-service`.
+
+## Contexto (business)
+
+Imagina un sistema de **biblioteca** que presta libros. Para poder prestar un libro, la biblioteca necesita saber cuántas copias hay disponibles y poder **reservar** copias para una solicitud de préstamo (antes de confirmar la entrega).
+
+Este taller modela ese problema como un “stock” simple:
+
+- Un **libro** (identificado por `BookId`) tiene un número de copias disponibles.
+- Un usuario hace una solicitud de préstamo y el sistema intenta **reservar** `N` copias para una `reservationId`.
+- Si no hay suficientes copias, la reserva debe fallar (regla de negocio).
+- Más adelante, esa reserva puede **liberarse** (cancelación) o convertirse en una operación final (en el taller lo dejamos en “reserva” para centrarnos en arquitectura).
+
+**¿Por qué este contexto?** Porque es el mismo tipo de problema que en el proyecto real: **reservar inventario** (`SKU`) para un pedido (`orderId` / `reservationId`). Cambia el dominio (biblioteca vs e‑commerce), pero la forma de razonar (Use Cases + puertos + adaptadores) es casi 1:1.
+
+### Qué vas a construir (resultado observable)
+
+Un micro‑servicio mínimo con:
+
+- **Core (dominio + aplicación)** que implementa el caso de uso `ReserveCopies` con reglas claras y testeables.
+- **Puertos** (interfaces) para persistencia y publicación de eventos.
+- **Adaptadores** in‑memory (para no depender de infra) y un adaptador HTTP (Fastify) para poder ejecutarlo y probarlo con `curl`.
 
 Stack (coherente con el repo): **Node 20 + TypeScript + Fastify + Vitest** (y `tsx` para dev).
 
@@ -18,6 +39,8 @@ Stack (coherente con el repo): **Node 20 + TypeScript + Fastify + Vitest** (y `t
 ## 1) Crear el mini‑proyecto (durante la clase)
 
 En la raíz del repo:
+
+> Nota: esta carpeta es para trabajar en clase y no está versionada en el repo.
 
 ```bash
 mkdir -p curso/dia-02/ejercicios
@@ -38,7 +61,7 @@ Configura `package.json` (inspirado en `project/services/inventory-service/packa
 Estructura mínima:
 
 ```text
-curso/dia-02/ejercicios/
+ejercicios/
 ├── src/
 │   ├── domain/
 │   ├── application/

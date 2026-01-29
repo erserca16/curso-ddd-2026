@@ -98,10 +98,12 @@ Regla práctica: si una clase “no compila” sin un framework (Fastify/Prisma)
 
 ## 6. Ejemplo práctico: arrancando un servicio hexagonal
 
-Durante la clase, usaremos un mini‑dominio “similar” al proyecto (reservar stock), pero **no** el mismo código: crearemos durante la sesión un mini‑proyecto en `curso/dia-02/ejercicios` con el **mismo stack del repo** (Node 20 + TypeScript + Fastify + Vitest).
+Durante la clase, usaremos un mini‑dominio “similar” al proyecto (reservar stock), pero **no** el mismo código: crearemos durante la sesión un mini‑proyecto de ejercicios con el **mismo stack del repo** (Node 20 + TypeScript + Fastify + Vitest).
+
+> Nota: ese mini‑proyecto se crea en clase y no está versionado en este repo. Guía paso a paso: `curso/dia-02/04-ejercicios.md`. (Ruta sugerida si lo quieres dentro del repo: `curso/dia-02/ejercicios/`.)
 
 ```text
-curso/dia-02/ejercicios/
+ejercicios/
 ├── src/
 │   ├── domain/                 # core: invariantes y reglas
 │   ├── application/            # core: casos de uso + puertos
@@ -120,19 +122,19 @@ Con el árbol anterior, responde:
 
 Pista rápida (para orientarte):
 
-- Dominio: `curso/dia-02/ejercicios/src/domain/BookStock.ts`
-- Caso de uso: `curso/dia-02/ejercicios/src/application/use-cases/ReserveCopiesUseCase.ts`
-- Puertos: `curso/dia-02/ejercicios/src/application/ports/*`
-- Entrada (HTTP): `curso/dia-02/ejercicios/src/main.ts` (Fastify)
-- Salida (repo in-memory): `curso/dia-02/ejercicios/src/infrastructure/persistence/InMemoryBookStockRepository.ts`
-- Salida (event publisher in-memory): `curso/dia-02/ejercicios/src/infrastructure/events/InMemoryEventPublisher.ts`
+- Dominio: `src/domain/BookStock.ts`
+- Caso de uso: `src/application/use-cases/ReserveCopiesUseCase.ts`
+- Puertos: `src/application/ports/*`
+- Entrada (HTTP): `src/main.ts` (Fastify)
+- Salida (repo in-memory): `src/infrastructure/persistence/InMemoryBookStockRepository.ts`
+- Salida (event publisher in-memory): `src/infrastructure/events/InMemoryEventPublisher.ts`
 
 ### 6.2 Definiendo un puerto (salida)
 
 En el mini‑dominio, el repositorio es un puerto de salida (persistencia). El contrato lo **consume** el caso de uso y lo **implementa** la infraestructura:
 
 ```ts
-// curso/dia-02/ejercicios/src/application/ports/BookStockRepositoryPort.ts (skeleton)
+// src/application/ports/BookStockRepositoryPort.ts (skeleton)
 export interface BookStockRepositoryPort {
   getByBookId(bookId: BookId): Promise<BookStock | null>;
   save(stock: BookStock): Promise<void>;
@@ -144,7 +146,7 @@ export interface BookStockRepositoryPort {
 En clase empezamos con un adaptador **in-memory** (rápido y sin infraestructura).
 
 ```ts
-// curso/dia-02/ejercicios/src/infrastructure/persistence/InMemoryBookStockRepository.ts (skeleton)
+// src/infrastructure/persistence/InMemoryBookStockRepository.ts (skeleton)
 export class InMemoryBookStockRepository implements BookStockRepositoryPort {
   // TODO: estructura interna (Map, etc.)
   async getByBookId(bookId: BookId): Promise<BookStock | null> { /* TODO */ }
@@ -155,7 +157,7 @@ export class InMemoryBookStockRepository implements BookStockRepositoryPort {
 ### 6.4 Wiring (manual) en `main.ts`
 
 ```ts
-// curso/dia-02/ejercicios/src/main.ts (idea)
+// src/main.ts (idea)
 const stockRepo = new InMemoryBookStockRepository();
 const events = new InMemoryEventPublisher();
 const reserveCopiesUseCase = new ReserveCopiesUseCase(stockRepo, events);
@@ -166,7 +168,7 @@ const reserveCopiesUseCase = new ReserveCopiesUseCase(stockRepo, events);
 Caso de uso: orquesta puertos + ejecuta reglas del dominio.
 
 ```ts
-// curso/dia-02/ejercicios/src/application/use-cases/ReserveCopiesUseCase.ts (skeleton)
+// src/application/use-cases/ReserveCopiesUseCase.ts (skeleton)
 export class ReserveCopiesUseCase {
   constructor(
     private readonly stockRepo: BookStockRepositoryPort,
@@ -182,7 +184,7 @@ export class ReserveCopiesUseCase {
 Adaptador HTTP: valida “forma”, traduce a comando y delega en el caso de uso.
 
 ```ts
-// curso/dia-02/ejercicios/src/main.ts (idea)
+// src/main.ts (idea)
 // POST /book-stock/:bookId/reserve { qty, reservationId }
 app.post("/book-stock/:bookId/reserve", async (req, reply) => {
   // TODO: validar forma (body/params), delegar en use case, mapear error → status
@@ -260,10 +262,10 @@ Para encapsular reglas e invariantes, reducir duplicidad de lógica y hacer que 
 Ejemplo (biblioteca): un `BookStock` con métodos intencionales (`reserve`, `release`, `replenish`) y **Value Objects** como `BookId` y `Quantity` que protegen invariantes.
 
 ```ts
-// curso/dia-02/ejercicios/src/domain/BookId.ts (idea)
+// src/domain/BookId.ts (idea)
 new BookId("BOOK-0001");
 
-// curso/dia-02/ejercicios/src/domain/Quantity.ts (idea)
+// src/domain/Quantity.ts (idea)
 new Quantity(3);
 ```
 

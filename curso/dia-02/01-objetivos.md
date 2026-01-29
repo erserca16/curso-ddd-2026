@@ -45,8 +45,10 @@
 
 Hoy trabajamos en dos fases:
 
-1. **Durante la sesión (práctica rápida):** implementamos los conceptos en `curso/dia-02/ejercicios` con un mini‑dominio “biblioteca” (reservas de stock), para que el foco sea arquitectura y modelado, no el proyecto.
+1. **Durante la sesión (práctica rápida):** implementamos los conceptos en un mini‑dominio “biblioteca” (reservas de stock), para que el foco sea arquitectura y modelado, no el proyecto. Guía del taller: `curso/dia-02/04-ejercicios.md`.
 2. **Al final (transfer):** aplicamos el mismo patrón al **inventory-service** en `project/services/inventory-service`.
+
+> Nota: la carpeta de ejercicios no está en el repo. Si quieres tenerlo “cerca” del temario, créala localmente en `curso/dia-02/ejercicios/` (queda sin versionar).
 
 ---
 
