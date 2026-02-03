@@ -2,8 +2,8 @@ export class BookId {
     constructor(private readonly value: string) {}
 
     static of(value: string) {
-        if (value.length != 32) {
-            throw new Error("The BookId must be 32 characters");
+        if (value.length != 36) {
+            throw new Error("The BookId must be 36 characters");
         }
         return new BookId(value);
     }

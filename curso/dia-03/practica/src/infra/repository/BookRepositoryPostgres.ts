@@ -11,12 +11,11 @@ type BookDBEntity = {
 
 function toBookDomain(row: any): Book {
     console.log("row", row)
+    console.log("row.id length", row.id.length)
     const book = new Book(BookId.of(row.id), row.title, row.stock);
     console.log("book", book)
     return book;
 }
-
-
 
 export class BookRepositoryPostgres implements BookRepositoryPort {
     constructor(private readonly dbClient: DBClient) {}
