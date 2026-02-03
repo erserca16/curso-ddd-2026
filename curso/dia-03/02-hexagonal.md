@@ -1,7 +1,7 @@
 # Sesión 3 · Martes 03-feb-2026  
-## Límites de dominio + hexagonal avanzada: scope, adapters y testing
+## Límites de dominio + hexagonal avanzada: contratos, adapters y testing
 
-**Objetivo:** definir límites claros para el dominio de inventario y reforzar la implementación hexagonal (scopes, adapters) con tests unitarios y de integración.
+**Objetivo:** definir límites claros para el dominio de inventario y reforzar la implementación hexagonal (contratos, adapters) con tests unitarios y de integración.
 
 ---
 
@@ -35,170 +35,53 @@ Y suele **excluir** (para evitar mezclar modelos):
 
 ## 1. Preparación y verificación preliminar
 
-### 1.1 Asegúrate de haber completado la Sesión 2:  
-- El servicio compila (`npm run build`) y arranca (`npm run dev`) sin errores.  
-- Prisma está configurado y la tabla `Inventory` existe en tu base de datos.  
+Esta sesión combina dos tipos de trabajo:
 
-### 1.2 Abre el proyecto en tu IDE y confirma que la estructura de carpetas es similar a la siguiente:
+1. **Ejemplo local (rápido):** seguimos con el mini‑proyecto de ejercicios (sin DB/broker) para practicar límites, contratos y tests por capas (guía base: `curso/dia-02/04-ejercicios.md`).
+2. **Transfer al proyecto (al final):** aplicamos lo mismo en `project/services/inventory-service`.
 
-```
-project/services/inventory-service/  
-├── src/  
-│   ├── domain/  
-│   │   ├── model/  
-│   │   └── ports/  
-│   ├── application/  
-│   │   ├── use-cases/  
-│   │   └── container.ts  
-│   ├── infrastructure/  
-│   │   ├── http/  
-│   │   ├── postgres/  
-│   │   └── in-memory/  
-│   └── main.ts  
-├── tests/  
-│   ├── unit/  
-│   └── integration/  
-├── prisma/  
-│   ├── schema.prisma  
-│   └── migrations/  
-├── package.json  
-├── tsconfig.json  
-└── Dockerfile
-```
+> Importante: evita invertir tiempo en “hacer que la infra funcione” antes de tener claros los límites y los contratos. En 3h, lo que más rendimiento da es iterar rápido con tests y adaptadores in‑memory.
 
 ---
 
-## 2. Scopes y ciclo de vida en el contenedor DI (Awilix)
+## 2. Ejemplo local: límites, lenguaje ubicuo y contrato (mini‑lab, 20–25 min)
 
-En `src/application/container.ts` vamos a registrar tres tipos de dependencias:
+Partimos del ejemplo de **biblioteca** del día 2 (reservas de copias), y lo tratamos como un bounded context “Inventory”:
 
-- **singleton()** para objetos globales:  
-  - PrismaClient  
-  - Configuración  
+1. Escribe el **lenguaje ubicuo** mínimo (5–8 términos) y su significado (ej.: “copias disponibles”, “reserva”, “reposición”, “movimiento”, “id de reserva”).
+2. Define el límite: qué cosas **entran** y qué cosas **no entran** en este contexto.
+3. Decide el contrato mínimo de integración:
+   - API (sync): una operación de *reserve*.
+   - Evento (async): un `CopiesReserved` (o el nombre que elijáis) con campos mínimos y versionado si aplica.
 
-- **scoped()** para repositorios y casos de uso:  
-  - InventoryRepositoryPostgres  
-  - ReserveStockUseCase  
-
-- **transient()** para objetos de prueba o stateful temporales:  
-  - InMemoryInventoryRepository
-
-Ejemplo de registro:
-
-```ts
-export const container = createContainer({ injectionMode: 'CLASSIC' })
-
-container.register({  
-  prisma: asClass(PrismaClient).singleton(),  
-  inventoryRepo: asClass(InventoryRepositoryPostgres).scoped(),  
-  inMemoryRepo: asClass(InMemoryInventoryRepository).transient(),  
-  reserveUseCase: asClass(ReserveStockUseCase).scoped()  
-})
-```
-
-**Por qué importa:** usar los scopes adecuados garantiza que tu aplicación no comparta estado indebidamente ni abra múltiples conexiones innecesarias.
+Resultado esperado: un contrato y un límite que todos en el equipo pueden explicar en 30 segundos.
 
 ---
 
-## 3. Adapter de prueba: InMemoryInventoryRepository
+## 3. Testing por capas (sin infra): qué testear y por qué (25–30 min)
 
-Crea el archivo `src/infrastructure/in-memory/InMemoryInventoryRepository.ts` con esta implementación:
+En bounded contexts pequeños, la estrategia mínima y rentable es:
 
-```ts
-import { InventoryRepositoryPort } from '../../domain/ports/InventoryRepositoryPort'  
-import { ProductInventory } from '../../domain/model/ProductInventory'
+- **Dominio (unit):** invariantes y reglas (no hay puertos ni I/O).
+- **Aplicación / Use Cases (unit):** orquestación + errores usando dobles de puertos (in‑memory / fakes).
+- **Infra (integration):** lo mínimo para confiar en Postgres/broker, sin testear lógica de negocio aquí.
 
-export class InMemoryInventoryRepository implements InventoryRepositoryPort {  
-  private items: Map<string, ProductInventory>
-
-  constructor(initial: Array<{ sku: string; available: number }> = []) {  
-    this.items = new Map(initial.map(i => [i.sku, new ProductInventory(i.sku, i.available)]))  
-  }
-
-  async findBySku(sku: string): Promise<ProductInventory | null> {  
-    const inv = this.items.get(sku)  
-    return inv ? new ProductInventory(inv.sku, inv.getAvailable()) : null  
-  }
-
-  async save(inventory: ProductInventory): Promise<void> {  
-    this.items.set(inventory.sku, new ProductInventory(inventory.sku, inventory.getAvailable()))  
-  }  
-}
-```
-
-Registra este adapter en el container bajo la clave `inMemoryRepo` con `.transient()`.
+Regla práctica: si para testear una regla tienes que levantar Docker, el test está en la capa equivocada.
 
 ---
 
-## 4. Tests unitarios de dominio y puerto
+## 4. Transfer al proyecto: `inventory-service` (últimos 35–45 min)
 
-Crea `tests/unit/ReserveStockUseCase.spec.ts`:
+Cuando el límite y el contrato estén claros en el ejemplo local, los “nombres” cambian pero el patrón es el mismo:
 
-```ts
-import { createContainer } from 'awilix'  
-import { InMemoryInventoryRepository } from '../../src/infrastructure/in-memory/InMemoryInventoryRepository'  
-import { ReserveStockUseCase } from '../../src/application/use-cases/ReserveStockUseCase'
+- `BookId` → `SKU` (`project/services/inventory-service/src/domain/value-objects/SKU.ts`)
+- Use case de reservar → `ReserveInventoryUseCase` (`project/services/inventory-service/src/application/ReserveInventoryUseCase.ts`)
+- Puerto de repo → `ProductInventoryRepositoryPort` (`project/services/inventory-service/src/domain/ports/ProductInventoryRepositoryPort.ts`)
 
-describe('ReserveStockUseCase - Unit Tests', () => {  
-  let container  
+Checklist de transferencia:
 
-  beforeEach(() => {  
-    container = createContainer({ injectionMode: 'CLASSIC' })  
-    container.register({  
-      inMemoryRepo: asClass(InMemoryInventoryRepository).transient(),  
-      reserveUseCase: asClass(ReserveStockUseCase).scoped()  
-    })  
-  })
-
-  it('reduce stock cuando hay suficiente', async () => {  
-    const repo = new InMemoryInventoryRepository([{ sku: 'ABC', available: 5 }])  
-    container.register({ inventoryRepo: asValue(repo) })  
-    const uc = container.resolve<ReserveStockUseCase>('reserveUseCase')  
-    await uc.execute('ABC', 3)  
-    const inv = await repo.findBySku('ABC')  
-    expect(inv!.getAvailable()).toBe(2)  
-  })
-
-  it('lanza error si no hay stock', async () => {  
-    const repo = new InMemoryInventoryRepository([{ sku: 'XYZ', available: 1 }])  
-    container.register({ inventoryRepo: asValue(repo) })  
-    const uc = container.resolve<ReserveStockUseCase>('reserveUseCase')  
-    await expect(uc.execute('XYZ', 5)).rejects.toThrow('insufficient stock')  
-  })  
-})
-```
-
----
-
-## 5. Tests de integración con Postgres en memoria
-
-Crea `tests/integration/InventoryRepositoryPostgres.spec.ts`:
-
-```ts
-import { PrismaClient } from '@prisma/client'  
-import { InventoryRepositoryPostgres } from '../../src/infrastructure/postgres/InventoryRepositoryPostgres'  
-import { ProductInventory } from '../../src/domain/model/ProductInventory'
-
-describe('InventoryRepositoryPostgres - Integration', () => {  
-  let prisma: PrismaClient  
-  let repo: InventoryRepositoryPostgres
-
-  beforeAll(async () => {  
-    prisma = new PrismaClient({ datasources: { db: { url: 'file:./test.db?mode=memory&cache=shared' } } })  
-    await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS Inventory (sku TEXT PRIMARY KEY, available INTEGER NOT NULL)`  
-    repo = new InventoryRepositoryPostgres(prisma)  
-  })
-
-  afterAll(async () => {  
-    await prisma.$disconnect()  
-  })
-
-  it('almacena y recupera inventario', async () => {  
-    const item = new ProductInventory('TEST', 10)  
-    await repo.save(item)  
-    const fetched = await repo.findBySku('TEST')  
-    expect(fetched).not.toBeNull()  
-    expect(fetched!.getAvailable()).toBe(10)  
-  })  
-})
-```
+1. Revisa que el Use Case solo conoce **puertos** y **dominio** (no Prisma, no HTTP).
+2. Asegura que los errores del dominio/aplicación son traducibles a contrato (400/404/409).
+3. Añade (o ajusta) tests rápidos en `project/services/inventory-service/src/__tests__/` que cubran:
+   - caso OK (reserva con stock),
+   - caso KO (sin stock / producto no existe).

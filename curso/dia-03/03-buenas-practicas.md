@@ -2,6 +2,8 @@
 
 **Objetivo:** incorporar patrones de inyección de dependencias sólidos, reducir código boilerplate y facilitar pruebas predecibles sin comprometer la claridad del diseño.
 
+> Nota: cuando hablamos de “ejercicios” en el día 3, nos referimos al mini‑proyecto local (continuación del taller del día 2) y al “transfer” final al `inventory-service`.
+
 ---
 
 ## 1. Principio de Hollywood

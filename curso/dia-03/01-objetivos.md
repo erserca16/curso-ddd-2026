@@ -34,28 +34,21 @@
 
 ---
 
-## Agenda (3h)
-
-| Hora | Bloque | Contenido |
-|------|--------|-----------|
-| 16:00–16:10 | Repaso y foco del día | Qué consolidamos y qué evitamos. |
-| 16:10–16:45 | Límites de dominio | Bounded contexts, subdominios, ownership y límites físicos. |
-| 16:45–17:15 | Contratos de integración | API vs eventos, manejo de errores y evolución del contrato. |
-| 17:15–17:25 | Descanso | Pausa breve. |
-| 17:25–18:05 | Testing por capas | Unit/integration, puertos, adapters y estrategia mínima. |
-| 18:05–18:50 | Taller: inventory-service | Implementar un caso de uso con tests y adapter real. |
-| 18:50–19:00 | Cierre | Quiz rápido y próximos pasos. |
-
 ## Relación con el Proyecto Final
 
-El foco de hoy es aplicar lo aprendido sobre arquitectura hexagonal para desarrollar un `inventory-service` bien estructurado, preparando su dominio e infraestructura para futuras integraciones y eventos.
+Hoy trabajamos en dos fases:
+
+1. **Durante la sesión (práctica local):** seguimos con el mini‑proyecto de ejercicios (el de la sesión 2) para practicar **límites de dominio**, contratos y testing sin depender de infra (rápido y muy iterativo).
+2. **Al final (transfer):** aplicamos el mismo patrón a `project/services/inventory-service` (y dejamos preparado el límite con pedidos para futuras sesiones).
+
+> Nota: el mini‑proyecto de ejercicios no está versionado. Si quieres tenerlo “cerca” del temario, créalo localmente en `curso/dia-02/ejercicios/` y sigue la guía `curso/dia-02/04-ejercicios.md`.
 
 ---
 
 ## Requisitos antes de empezar
 
-- Código de la Sesión 2 clonado en local
+- Para ejercicios (local): Node.js 20+ y editor listo  
+- Para transfer al proyecto (final): repo `project/` funcionando y sin errores de TypeScript  
 - Comprensión de Ports & Adapters y DI con Awilix  
-- VS Code sin errores de ESLint ni TypeScript  
 
 Con estos cimientos, entramos en la Sesión 3 enfocados en reforzar el aprendizaje anterior y avanzar con un servicio concreto. ¡A por ello!

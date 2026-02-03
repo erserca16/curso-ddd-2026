@@ -1,7 +1,9 @@
 # Sesión 3 · Martes 03-feb-2026  
 ## Repaso exprés de la Sesión 2
 
-Antes de profundizar en **límites de dominio** y continuar consolidando Arquitectura Hexagonal, conviene repasar los aprendizajes y “tareas de brillo” que dejamos listos.
+Antes de profundizar en **límites de dominio** y continuar consolidando Arquitectura Hexagonal, conviene repasar los aprendizajes del día anterior.
+
+> Hoy seguimos usando un ejemplo **local** (el mini‑proyecto de ejercicios de la sesión 2). Si lo creaste dentro del repo, estará en `curso/dia-02/ejercicios/` (no está versionado). Si aún no lo tienes, usa la guía `curso/dia-02/04-ejercicios.md`. La idea es practicar límites, contratos y testing sin depender de infra, y al final hacer el “transfer” al `inventory-service`.
 
 Tema | Insight clave | Acción inmediata
 -----|--------------|----------------

@@ -17,9 +17,9 @@
 * **Sesión 03 – Límites de Dominio (Martes 03-feb-2026)**
   * [00 · Repaso](curso/dia-03/00-repaso.md)
   * [01 · Objetivos](curso/dia-03/01-objetivos.md)
-  * [02 · Límites de dominio + scope + testing](curso/dia-03/02-hexagonal.md)
+  * [02 · Límites de dominio + contratos + testing](curso/dia-03/02-hexagonal.md)
   * [03 · Buenas Prácticas](curso/dia-03/03-buenas-practicas.md)
-  * [04 · Avance Proyecto](curso/dia-03/04-avance-proyecto.md)
+  * [04 · Ejercicios](curso/dia-03/04-ejercicios.md)
 
 * **Sesión 04 – DDD Fundamentos (Jueves 05-feb-2026)**
   * [00 · Repaso](curso/dia-04/00-repaso.md)
