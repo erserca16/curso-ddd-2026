@@ -1,6 +1,6 @@
 # Módulo 9 — Domain-Driven Design (DDD): fundamentos (estratégico → táctico)
 
-> Este documento conecta DDD con límites de microservicios y modelos coherentes por contexto.
+> Este documento conecta DDD con límites de microservicios y con el paso práctico más importante del curso: **salir del modelo anémico** hacia un **modelo rico** (invariantes + comportamiento en el dominio).
 
 ## 0. ¿Qué es DDD?
 
@@ -36,7 +36,7 @@ flowchart TD
 ¿Qué es el lenguaje ubicuo? Un vocabulario compartido entre expertos de negocio y desarrolladores, alineado al **lenguaje empresarial** y reflejado en código, tests y documentación.
 
 Patrones clave:
-- Glosario de términos técnicos-negocio (ej: Pedido = Order agregado con Items)
+- Glosario de términos técnicos‑negocio (ej: “reserva” = `ReservationId` aplicado a `BookStock`)
 - Diagramas que reflejan lenguaje de negocio (no solo UML técnico)
 - Documentación viva en el código (tipos, métodos y tests con nombres de dominio)
 
@@ -151,22 +151,40 @@ Flujo de diseño recomendado:
 
 Objetivo: Comprender por qué el modelo anémico dificulta la evolución del software y cómo un dominio rico encapsula reglas, invariantes y comportamientos dentro de las entidades.
 
+### 7.1 Ejemplo (anémico) usando el mini‑dominio del curso
 
-Ejemplo en `order-service`:
+En el curso usamos un proxy de inventario: **biblioteca** (stock de copias de libros) para practicar sin depender de infraestructura.
+
+Un modelo anémico típico empieza así:
 
 ```ts
-// anemic/orderModel.ts  
-export interface OrderRow {  
-  id: string  
-  status: string             // 'PENDING' | 'PAID'  
-  items: Array<{ sku: string; qty: number; price: number }>  
-}  
+// (anémico) BookStockRow.ts
+export type BookStockRow = {
+  bookId: string;
+  availableCopies: number;
+  reservations: Array<{ reservationId: string; qty: number }>;
+};
 
-export const saveOrder = async (db, row: OrderRow) => {  
-  // Toda la lógica de estado y totales vive fuera de la entidad  
-  return db.insert('orders', row)  
+export function reserveCopies(
+  row: BookStockRow,
+  command: { reservationId: string; qty: number }
+): BookStockRow {
+  // Reglas dispersas + validación “a medias”
+  if (!Number.isInteger(command.qty) || command.qty <= 0) throw new Error("Invalid qty");
+  const reservedTotal = row.reservations.reduce((acc, r) => acc + r.qty, 0);
+  const availableToReserve = row.availableCopies - reservedTotal;
+  if (command.qty > availableToReserve) throw new Error("Insufficient stock");
+
+  return {
+    ...row,
+    reservations: [...row.reservations, { reservationId: command.reservationId, qty: command.qty }]
+  };
 }
 ```
+
+**Olor típico:** el mismo concepto (cantidad, idempotencia, stock disponible) acaba duplicado en handlers HTTP, repositorios, tests… y los invariantes no están protegidos por diseño.
+
+---
 
 **Problemas principales:**  
 - Imposible garantizar invariantes (ej. que qty > 0, status sólo permitido).  
@@ -181,123 +199,182 @@ Referencia: Martin Fowler, “Anemic Domain Model” – https://martinfowler.co
 
 Un **modelo rico** coloca la lógica de negocio dentro de las propias entidades y agregados. Así cada objeto sabe cómo validarse y comportarse.
 
-### 8.1 Value Object: Quantity
+### 8.1 Value Objects (invariantes explícitas)
+
+Primero capturamos las reglas en Value Objects. Ejemplo (del mini‑proyecto):
 
 ```ts
-// src/domain/value-objects/Quantity.ts  
-/**  
- * Value Object que encapsula las reglas de cantidad  
- * - Entero positivo  
- * - Inmutable  
- */  
-export class Quantity {  
-  private constructor(private readonly qty: number) {}  
+// .local/dia-04-referencia/src/domain/Quantity.ts
+import { InvalidQuantityError } from "./errors.js";
 
-  static of(n: number): Quantity {  
-    if (!Number.isInteger(n) || n <= 0) throw new Error('Quantity inválida: debe ser entero positivo')  
-    return new Quantity(n)  
-  }  
+export class Quantity {
+  private constructor(private readonly value: number) {}
 
-  get value(): number {  
-    return this.qty  
-  }  
+  static of(n: number): Quantity {
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new InvalidQuantityError("Quantity must be a positive integer.");
+    }
+    return new Quantity(n);
+  }
+
+  toNumber(): number {
+    return this.value;
+  }
 }
 ```
 
-### 8.2 Entity y Aggregate Root: Order
+La misma idea aplica a identificadores:
 
 ```ts
-// src/domain/entities/OrderItem.ts  
-import { Quantity } from '../value-objects/Quantity'  
+// .local/dia-04-referencia/src/domain/BookId.ts
+import { InvalidBookIdError } from "./errors.js";
 
-export class OrderItem {  
-  constructor(  
-    readonly sku: string,  
-    readonly quantity: Quantity,  
-    readonly priceCents: number  // precio en centavos para evitar decimales  
-  ) {  
-    if (priceCents < 0) throw new Error('Price inválido: negativo')  
-  }  
+export class BookId {
+  private static readonly pattern = /^BOOK-\d{4}$/;
+  private constructor(private readonly value: string) {}
 
-  // Comportamiento: calcula subtotal de este item  
-  subtotal(): number {  
-    return this.quantity.value * this.priceCents  
-  }  
+  static of(raw: string): BookId {
+    if (!BookId.pattern.test(raw)) {
+      throw new InvalidBookIdError(
+        "BookId must match format BOOK-0001 (e.g. BOOK-0001)."
+      );
+    }
+    return new BookId(raw);
+  }
+
+  toString(): string {
+    return this.value;
+  }
 }
 ```
 
+Con esto, “cantidad” y “ID” dejan de ser `number/string` sin semántica.
+
+---
+
+### 8.2 Aggregate Root (estado + comportamiento)
+
+Después modelamos el agregado que **protege invariantes**. En nuestro caso: `BookStock`.
+
 ```ts
-// src/domain/aggregates/Order.ts  
-import { OrderItem } from '../entities/OrderItem'  
-import { Quantity } from '../value-objects/Quantity'  
+// .local/dia-04-referencia/src/domain/BookStock.ts
+import { DomainEvent } from "./DomainEvent.js";
+import { InsufficientStockError, ReservationConflictError } from "./errors.js";
+import { BookId } from "./BookId.js";
+import { Quantity } from "./Quantity.js";
+import { ReservationId } from "./ReservationId.js";
 
-export class Order {  
-  private items: OrderItem[] = []  
-  private status: 'PENDING' | 'PAID' = 'PENDING'  
+export class BookStock {
+  private readonly reservations = new Map<string, { reservationId: ReservationId; qty: Quantity }>();
+  private readonly domainEvents: DomainEvent[] = [];
 
-  constructor(readonly id: string) {}  
+  private constructor(
+    readonly bookId: BookId,
+    private availableCopies: number
+  ) {}
 
-  // Agregar un ítem protege invariantes: qty > 0, precio válido  
-  addItem(sku: string, qty: number, price: number) {  
-    const quantity = Quantity.of(qty)  
-    const priceCents = Math.round(price * 100)  
-    this.items.push(new OrderItem(sku, quantity, priceCents))  
-  }  
+  static create(bookId: BookId, availableCopies: number): BookStock {
+    if (!Number.isInteger(availableCopies) || availableCopies < 0) {
+      throw new Error("availableCopies must be a non-negative integer.");
+    }
+    return new BookStock(bookId, availableCopies);
+  }
 
-  // Transición de estado controlada  
-  pay() {  
-    if (this.status !== 'PENDING') throw new Error('El pedido ya fue pagado')  
-    this.status = 'PAID'  
-  }  
+  reserve(reservationId: ReservationId, qty: Quantity): void {
+    const existing = this.reservations.get(reservationId.toString());
+    if (existing) {
+      if (existing.qty.toNumber() !== qty.toNumber()) {
+        throw new ReservationConflictError(
+          "reservationId already exists with a different qty (idempotency conflict)."
+        );
+      }
+      return;
+    }
 
-  // Lógica de negocio: cálculo del total en decimales  
-  total(): number {  
-    const sumCents = this.items.reduce((acc, it) => acc + it.subtotal(), 0)  
-    return sumCents / 100  
-  }  
+    if (qty.toNumber() > this.getAvailableCopies()) {
+      throw new InsufficientStockError("Insufficient available copies.");
+    }
 
-  get currentStatus(): string {  
-    return this.status  
-  }  
+    this.reservations.set(reservationId.toString(), { reservationId, qty });
+    this.domainEvents.push({
+      type: "CopiesReserved",
+      version: 1,
+      occurredAt: new Date().toISOString(),
+      payload: {
+        bookId: this.bookId.toString(),
+        reservationId: reservationId.toString(),
+        qty: qty.toNumber()
+      }
+    });
+  }
+
+  pullDomainEvents(): DomainEvent[] {
+    return this.domainEvents.splice(0, this.domainEvents.length);
+  }
+
+  getAvailableCopies(): number {
+    return this.availableCopies - this.getReservedCopies();
+  }
+
+  private getReservedCopies(): number {
+    let sum = 0;
+    for (const r of this.reservations.values()) sum += r.qty.toNumber();
+    return sum;
+  }
 }
 ```
 
-### 8.3 Diagrama de flujo de comportamiento
+Fíjate en dos decisiones típicas de DDD táctico:
+
+1. **Idempotencia** como regla del dominio (no del controller): `reservationId` ya existe ⇒ o no hace nada (mismo qty) o conflicto (qty distinto).
+2. **Domain Event** emitido desde el agregado: el dominio “dice qué pasó” y la aplicación decide cómo publicarlo.
+
+---
+
+### 8.3 Use Cases + Ports (orquestación fuera del dominio)
+
+El dominio no sabe “dónde se guarda” ni “cómo se publica” un evento. Eso vive en la capa de aplicación mediante **puertos**:
 
 ```mermaid
-flowchart TB
-  subgraph OrderAggregate["Order Aggregate"]
-    direction TB
-    A["id: string"]
-    B["items: OrderItem[]"]
-    C["status: PENDING or PAID"]
-    D["addItem(sku, qty, price)"]
-    E["pay()"]
-    F["total(): number"]
-  end
+sequenceDiagram
+    participant HTTP as Adapter HTTP
+    participant UC as ReserveCopiesUseCase
+    participant Repo as BookStockRepositoryPort
+    participant Agg as BookStock (Aggregate)
+    participant Pub as EventPublisherPort
 
-  D --> Q["Quantity.of(qty)"]
-  D --> P["priceCents = round(price * 100)"]
-  Q --> N["new OrderItem(sku, qty, priceCents)"]
-  N --> B
-
-  E --> C
-  B --> F
+    HTTP->>UC: { bookId, qty, reservationId }
+    UC->>Repo: getByBookId(BookId)
+    Repo-->>UC: BookStock
+    UC->>Agg: reserve(ReservationId, Quantity)
+    Agg-->>UC: (domain events)
+    UC->>Repo: save(BookStock)
+    UC->>Pub: publish(event)*
 ```
 
 ---
 
-## 9. Puerto de Persistencia
+## 9. Puertos (persistencia + publicación)
 
-Para mantener el dominio independiente de la base de datos, definimos un puerto en `order-service`:
+Para mantener el dominio independiente de la base de datos y del broker:
 
 ```ts
-// src/domain/ports/OrderRepositoryPort.ts  
-import { Order } from '../aggregates/Order'  
+// .local/dia-04-referencia/src/application/ports/BookStockRepositoryPort.ts
+import { BookId } from "../../domain/BookId.js";
+import { BookStock } from "../../domain/BookStock.js";
 
-export interface OrderRepositoryPort {  
-  save(order: Order): Promise<void>  
-  findById(id: string): Promise<Order | null>  
+export interface BookStockRepositoryPort {
+  getByBookId(bookId: BookId): Promise<BookStock | null>;
+  save(stock: BookStock): Promise<void>;
+}
+```
+
+```ts
+// .local/dia-04-referencia/src/application/ports/EventPublisherPort.ts
+import { DomainEvent } from "../../domain/DomainEvent.js";
+
+export interface EventPublisherPort {
+  publish(event: DomainEvent): Promise<void>;
 }
 ```
 
@@ -305,7 +382,21 @@ Así la infraestructura (Postgres, Mongo, Redis) implementará este contrato sin
 
 ---
 
-## 10. Comparativa rápida
+## 10. Ejemplo de Use Case (orquestación “fina”)
+
+El Use Case traduce input → dominio → persistencia → publicación, sin meter reglas.
+
+```ts
+// .local/dia-04-referencia/src/application/use-cases/ReserveCopiesUseCase.ts
+stock.reserve(reservationId, qty);
+await this.repo.save(stock);
+
+for (const ev of stock.pullDomainEvents()) {
+  await this.events.publish(ev);
+}
+```
+
+## 11. Comparativa rápida
 
 Métrica                 | Modelo anémico                 | Modelo rico  
 ------------------------|--------------------------------|---------------------------------  
@@ -316,17 +407,17 @@ Legibilidad del código  | Bajo                            | Alto, código autoe
 
 ---
 
-## 11. Migración gradual y segura
+## 12. Migración gradual y segura
 
-1. **Paralelismo**: crea las nuevas clases (`Order`, `OrderItem`, `Quantity`) sin eliminar aún el código anémico.  
-2. **Cobertura de tests**: añade tests unitarios para cada método crítico (`addItem`, `pay`, `total`).  
-3. **Use Cases**: adapta los Application Services para instanciar y usar el dominio rico, sin tocar la infraestructura.  
-4. **Verificación**: ejecuta el flujo completo (`order-service` + `order-api`) contra Postgres.  
-5. **Descontaminación**: elimina el modelo anémico (`orderModel.ts`, `saveOrder`) cuando la cobertura de tests supere el 80%.
+1. **Paralelismo**: introduce VOs (`BookId`, `ReservationId`, `Quantity`) sin reescribir todo de golpe.  
+2. **Cobertura de tests**: tests de dominio para invariantes y reglas (`reserve` + idempotencia).  
+3. **Agregado rico**: mueve reglas desde controllers/repositorios a `BookStock`.  
+4. **Domain Events**: deja que el agregado “genere hechos” y publica desde el Use Case (`pullDomainEvents`).  
+5. **Verificación**: compara tu resultado con `.local/dia-04-referencia/` (solo referencia).  
 
 ---
 
-## 12. Aplicando los distintos patrones a proyectos de Node
+## 13. Aplicando los distintos patrones a proyectos de Node
 
 - Alinea microservicios con **bounded contexts** (no con tablas o capas técnicas).
 - Usa **arquitectura hexagonal** para separar dominio/aplicación/infra y facilitar tests.

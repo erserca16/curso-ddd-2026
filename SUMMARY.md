@@ -25,7 +25,7 @@
   * [00 · Repaso](curso/dia-04/00-repaso.md)
   * [01 · Objetivos](curso/dia-04/01-objetivos.md)
   * [02 · DDD Fundamentos](curso/dia-04/02-ddd-fundamentos.md)
-  * [03 · Avance Proyecto](curso/dia-04/03-avance-proyecto.md)
+  * [03 · Ejercicios](curso/dia-04/03-ejercicios.md)
 
 * **Sesión 05 – DDD Avanzado (Martes 10-feb-2026)**
   * [00 · Repaso](curso/dia-05/00-repaso.md)

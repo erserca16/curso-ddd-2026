@@ -3,8 +3,8 @@
 
 | Tema                    | Insight clave                                                                            | Acción inmediata                                                       |
 |-------------------------|------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| **Scopes DI (Awilix)**  | `singleton()`, `scoped()`, `transient()` definen el ciclo de vida de las instancias: evita fugas de estado. | Revisa `container.ts` y confirma que Prisma esté registrado como singleton y los repositorios como scoped. |
-| **Adapter In-Memory**   | Un repositorio en memoria permite tests ultrarrápidos sin dependencia de infraestructura. | Implementa y registra `InMemoryInventoryRepository` como `.transient()`. |
-| **Unit Tests de UseCase** | Validan la lógica de dominio y puertos sin tocar la infraestructura.                  | Ejecuta los tests de UseCase y corrige cualquier dependencia directa a la capa de infraestructura. |
-| **Integration Tests**   | Verifican los adapters (Postgres) usando la base de datos en memoria.                    | Asegúrate de que los tests creen y eliminen la tabla `Inventory` dinámicamente. |
-| **Límites de dominio** | Delimitar inventario vs pedidos evita acoplamiento y modelos inconsistentes.             | Revisa tus endpoints/eventos: ¿qué responsabilidad pertenece a Inventory y cuál a Order? |
+| **Límites de dominio** | Delimitar inventario vs pedidos evita acoplamiento y modelos inconsistentes.             | En el mini‑dominio (biblioteca), lista qué es “inventario” y qué no (p. ej. “pedido” / “cliente”). |
+| **Errores de dominio** | Errores tipados ayudan a mapear contrato y a testear reglas sin infra.                   | Asegura que `Invalid*Error`, `InsufficientStockError`, etc. salen del dominio, no del adaptador HTTP. |
+| **VOs e invariantes**  | Un Value Object centraliza validación y hace el modelo expresivo.                         | Revisa `BookId`, `Quantity`, `ReservationId`: ¿hay invariantes duplicadas en controllers/tests? |
+| **Aggregate rico**     | El agregado concentra estado + comportamiento, no “setters”.                              | Comprueba que la regla de idempotencia (`reservationId`) vive en `BookStock.reserve(...)`. |
+| **Tests por capas**    | Dominio y use cases se testean rápido; la infra se testea aparte.                         | Ejecuta (o revisa) tests de `BookStock` y de `ReserveCopiesUseCase` con dobles. |

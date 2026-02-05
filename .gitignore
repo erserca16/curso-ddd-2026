@@ -4,7 +4,6 @@ dist
 cheatsheet.md
 scripts/
 
-# Local workshop scratchpads (not versioned)
 .local/
 curso/dia-02/ejercicios/
 curso/dia-03/ejercicios/
